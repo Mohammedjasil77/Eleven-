@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-
-// You can use a shoe icon from a library like react-icons
-// import { FaShoePrints } from 'react-icons/fa';
-
+import React, { useState } from "react";
+import api from "../../../Api/Apipage";
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -17,28 +17,45 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here (e.g., API call to authenticate user)
-    console.log('Login data submitted:', formData);
-    alert('Login successful!');
+    setError("");
+    setSuccess("");
+
+    try {
+      // Fetch users from db.json (example: http://localhost:5000/users)
+      const response = await api.get("/users", {
+        params: { email: formData.email, password: formData.password },
+      });
+
+      if (response.data.length > 0) {
+        setSuccess("✅ Login successful!");
+        alert("Login successful!");
+        console.log("Logged in user:", response.data[0]);
+      } else {
+        setError("❌ Invalid email or password");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("⚠️ Something went wrong. Please try again.");
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
-          {/* Optional: Icon */}
-          {/* <FaShoePrints className="mx-auto text-4xl text-gray-800 mb-2" /> */}
           <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-          <p className="text-gray-500 mt-2">Log in to continue to your account.</p>
+          <p className="text-gray-500 mt-2">
+            Log in to continue to your account.
+          </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email Input */}
           <div>
-            <label 
-              htmlFor="email" 
+            <label
+              htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
               Email Address
@@ -57,8 +74,8 @@ const Login = () => {
 
           {/* Password Input */}
           <div>
-            <label 
-              htmlFor="password" 
+            <label
+              htmlFor="password"
               className="block text-sm font-medium text-gray-700"
             >
               Password
@@ -84,7 +101,10 @@ const Login = () => {
                 type="checkbox"
                 className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-gray-900"
+              >
                 Remember me
               </label>
             </div>
@@ -95,7 +115,11 @@ const Login = () => {
               </a>
             </div>
           </div>
-          
+
+          {/* Error or Success Message */}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {success && <p className="text-green-600 text-sm">{success}</p>}
+
           {/* Submit Button */}
           <div>
             <button
@@ -109,7 +133,7 @@ const Login = () => {
 
         {/* Sign Up Link */}
         <p className="mt-8 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <a href="/register" className="font-medium text-black hover:underline">
             Sign up
           </a>

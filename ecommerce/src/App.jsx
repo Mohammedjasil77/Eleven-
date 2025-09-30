@@ -4,15 +4,21 @@ import HomePage from "./Pages/NonAuth/Home/HomePage";
 import Registration from "./Pages/Auth/Registration";
 import Login from "./Pages/Auth/Login";
 import NotFound from "./Pages/NonAuth/NotFound/NotFound";
+import Navbar from "./Components/Navbar/Navbar";
 
 function App() {
   return (
-    <Routes>
+    
+    <>
+      <Navbar />
+      <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Registration />} />
       <Route path="*" element={<NotFound />} />
-    </Routes>
+    </Routes>   
+    </>
+   
   );
 }
 
