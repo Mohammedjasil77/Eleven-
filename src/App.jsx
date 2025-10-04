@@ -8,6 +8,10 @@ import Navbar from "./Components/Navbar/Navbar";
 import ShopPage from "./Pages/NonAuth/shop/Shop";
 import NewArrivals from "./Pages/NonAuth/Home/NewArrivals";
 import ProductDetails from "./Pages/NonAuth/Products/ProductDetails";
+import CartPage from "./Pages/NonAuth/Cart/Cart";
+import WishlistPage from "./Pages/NonAuth/Cart/wishlist";
+import AboutPage from "./Pages/NonAuth/About";
+
 
 function App() {
   return (
@@ -22,6 +26,9 @@ function App() {
       <Route path="/shop" element={<ShopPage />} />
       <Route path="/new-arrivals" element={<NewArrivals />} />
       <Route path="/product-details" element={<ProductDetails />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/wishlist" element={<WishlistPage />} />
+      <Route path="/about" element={<AboutPage />} />
     </Routes>   
     </>
    

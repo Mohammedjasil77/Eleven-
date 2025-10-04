@@ -153,28 +153,6 @@ const HomePage = () => {
           </Link>
         </div>
       </section>
-
-      {/* Newsletter Section */}
-      <section className="py-20 border-t border-gray-200">
-        <div className="max-w-2xl mx-auto text-center px-6">
-          <h2 className="text-2xl font-serif font-light mb-4 tracking-wide">
-            STAY CONNECTED
-          </h2>
-          <p className="text-gray-600 font-light mb-8 tracking-wide">
-            Be the first to discover new collections and exclusive offers
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-3 border border-gray-300 text-sm font-light tracking-wide focus:outline-none focus:border-black transition duration-300"
-            />
-            <button className="bg-black text-white px-6 py-3 text-sm font-light tracking-widest uppercase hover:bg-gray-800 transition duration-300">
-              Subscribe
-            </button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
