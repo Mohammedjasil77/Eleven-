@@ -1,20 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../../Api/Apipage";
-const Login = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+import { AuthContext } from "../../Context/AuthContext"; // ✅ import context
 
+const Login = () => {
+  const { login } = useContext(AuthContext); // ✅ get login function from context
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -23,15 +21,21 @@ const Login = () => {
     setSuccess("");
 
     try {
-      // Fetch users from db.json (example: http://localhost:5000/users)
       const response = await api.get("/users", {
         params: { email: formData.email, password: formData.password },
       });
 
       if (response.data.length > 0) {
+        const user = response.data[0];
+
+        // ✅ Use context to store user (updates global state + localStorage)
+        login(user);
+
         setSuccess("✅ Login successful!");
         alert("Login successful!");
-        console.log("Logged in user:", response.data[0]);
+
+        // ✅ Redirect to home page
+        navigate("/");
       } else {
         setError("❌ Invalid email or password");
       }
@@ -54,10 +58,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email Input */}
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email Address
             </label>
             <input
@@ -74,10 +75,7 @@ const Login = () => {
 
           {/* Password Input */}
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
@@ -92,34 +90,6 @@ const Login = () => {
             />
           </div>
 
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 block text-sm text-gray-900"
-              >
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="font-medium text-black hover:underline">
-                Forgot password?
-              </a>
-            </div>
-          </div>
-
-          {/* Error or Success Message */}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
-
           {/* Submit Button */}
           <div>
             <button
@@ -129,6 +99,10 @@ const Login = () => {
               Log In
             </button>
           </div>
+
+          {/* Error or Success */}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {success && <p className="text-green-600 text-sm">{success}</p>}
         </form>
 
         {/* Sign Up Link */}
