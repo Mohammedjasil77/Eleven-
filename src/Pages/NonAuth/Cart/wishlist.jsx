@@ -1,68 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
+import { useWishlist } from "../../../Context/WishList";
+import { useCart } from "../../../Context/CartContext";
 const WishlistPage = () => {
-  const [wishlistItems, setWishlistItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Sample wishlist data
-  useEffect(() => {
-    const fetchWishlistData = async () => {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const sampleWishlistItems = [
-          {
-            id: "1",
-            productId: "1",
-            name: "GG Marmont Matelassé Sneaker",
-            price: 98000,
-            originalPrice: 120000,
-            image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80",
-            category: "sneakers",
-            isInStock: true,
-            addedDate: "2024-01-15",
-            colors: ["black", "white"],
-            sizes: ["38", "39", "40", "41"]
-          },
-          {
-            id: "2",
-            productId: "3",
-            name: "Princetown Leather Slipper",
-            price: 75000,
-            originalPrice: 89000,
-            image: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80",
-            category: "slippers",
-            isInStock: true,
-            addedDate: "2024-01-10",
-            colors: ["black", "red", "navy"],
-            sizes: ["37", "38", "39", "40"]
-          },
-          {
-            id: "3",
-            productId: "6",
-            name: "Brixton Leather Boot",
-            price: 110000,
-            originalPrice: 135000,
-            image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80  ",
-            category: "boots",
-            isInStock: false,
-            addedDate: "2024-01-08",
-            colors: ["black", "tan"],
-            sizes: ["38", "39", "40", "41"]
-          }
-        ];
-        
-        setWishlistItems(sampleWishlistItems);
-      } catch (error) {
-        console.error('Error fetching wishlist data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWishlistData();
-  }, []);
+  const { 
+    wishlistItems, 
+    loading, 
+    error, 
+    removeFromWishlist, 
+    moveToCart, 
+    clearWishlist,
+    clearError,
+    getWishlistCount
+  } = useWishlist();
+  
+  const { addToCart } = useCart();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-IN', {
@@ -72,26 +24,53 @@ const WishlistPage = () => {
     }).format(price);
   };
 
-  const removeFromWishlist = (itemId) => {
-    setWishlistItems(prevItems => prevItems.filter(item => item.id !== itemId));
-  };
-
-  const addToCart = (item) => {
-    // In real app, this would add item to cart
-    alert(`Added ${item.name} to cart`);
-  };
-
-  const moveAllToCart = () => {
-    const inStockItems = wishlistItems.filter(item => item.isInStock);
-    if (inStockItems.length > 0) {
-      alert(`Moving ${inStockItems.length} items to cart`);
+  const handleMoveToCart = async (item) => {
+    const result = await moveToCart(item, { addToCart });
+    if (result.success) {
+      console.log(result.message);
+      alert("Item moved to cart successfully!");
     } else {
+      alert(result.message);
+    }
+  };
+
+  const handleRemoveFromWishlist = async (itemId) => {
+    const result = await removeFromWishlist(itemId);
+    if (result.success) {
+      console.log(result.message);
+    } else {
+      alert(result.message);
+    }
+  };
+
+  const handleMoveAllToCart = async () => {
+    const inStockItems = wishlistItems.filter(item => item.isInStock);
+    if (inStockItems.length === 0) {
       alert("No items in stock to move to cart");
+      return;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const item of inStockItems) {
+      const result = await moveToCart(item, { addToCart });
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      alert(`Successfully moved ${successCount} items to cart${errorCount > 0 ? `, ${errorCount} failed` : ''}`);
+    } else {
+      alert("Failed to move items to cart");
     }
   };
 
   const getTotalValue = () => {
-    return wishlistItems.reduce((total, item) => total + item.price, 0);
+    return wishlistItems.reduce((total, item) => total + (item.price || 0), 0);
   };
 
   const getInStockCount = () => {
@@ -104,6 +83,22 @@ const WishlistPage = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
           <p className="text-sm font-light tracking-widest uppercase">Loading Wishlist</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={clearError}
+            className="border border-black text-black px-6 py-2 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -142,14 +137,22 @@ const WishlistPage = () => {
                   </p>
                 </div>
                 
-                {getInStockCount() > 0 && (
+                <div className="flex gap-3 mt-4 sm:mt-0">
+                  {getInStockCount() > 0 && (
+                    <button
+                      onClick={handleMoveAllToCart}
+                      className="border border-black text-black px-6 py-3 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
+                    >
+                      Move All to Cart ({getInStockCount()})
+                    </button>
+                  )}
                   <button
-                    onClick={moveAllToCart}
-                    className="mt-4 sm:mt-0 border border-black text-black px-6 py-3 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
+                    onClick={clearWishlist}
+                    className="border border-gray-400 text-gray-600 px-6 py-3 text-sm font-light tracking-widest uppercase hover:bg-gray-100 transition duration-300"
                   >
-                    Move All to Cart ({getInStockCount()})
+                    Clear All
                   </button>
-                )}
+                </div>
               </div>
 
               {/* Wishlist Grid */}
@@ -167,7 +170,7 @@ const WishlistPage = () => {
                       
                       {/* Remove Button */}
                       <button
-                        onClick={() => removeFromWishlist(item.id)}
+                        onClick={() => handleRemoveFromWishlist(item.id)}
                         className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full opacity-100 group-hover:opacity-100 transition duration-300 hover:bg-white"
                       >
                         <svg 
@@ -223,35 +226,15 @@ const WishlistPage = () => {
                         {item.category}
                       </p>
 
-                      {/* Color Swatches */}
-                      {item.colors && item.colors.length > 0 && (
-                        <div className="flex justify-center gap-1 mb-3">
-                          {item.colors.slice(0, 3).map((color, index) => (
-                            <div
-                              key={index}
-                              className="w-3 h-3 rounded-full border border-gray-300"
-                              style={{ 
-                                backgroundColor: color === 'white' ? '#ffffff' : 
-                                               color === 'black' ? '#000000' :
-                                               color === 'red' ? '#dc2626' :
-                                               color === 'blue' ? '#2563eb' :
-                                               color === 'navy' ? '#1e3a8a' :
-                                               color === 'tan' ? '#d6d3d1' : color
-                              }}
-                              title={color}
-                            />
-                          ))}
-                          {item.colors.length > 3 && (
-                            <div className="w-3 h-3 rounded-full border border-gray-300 flex items-center justify-center">
-                              <span className="text-xs text-gray-500">+{item.colors.length - 3}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {/* Size and Color Info */}
+                      <div className="flex justify-center items-center gap-4 mb-3 text-xs text-gray-500">
+                        <span>Size: {item.size || "M"}</span>
+                        <span>Color: {item.color || "Default"}</span>
+                      </div>
 
                       {/* Add to Cart Button */}
                       <button
-                        onClick={() => addToCart(item)}
+                        onClick={() => handleMoveToCart(item)}
                         disabled={!item.isInStock}
                         className={`w-full py-3 text-xs tracking-widest uppercase font-light border transition duration-300 mb-2 ${
                           !item.isInStock
@@ -259,17 +242,19 @@ const WishlistPage = () => {
                             : 'bg-black text-white border-black hover:bg-gray-800'
                         }`}
                       >
-                        {!item.isInStock ? 'Out of Stock' : 'Add to Cart'}
+                        {!item.isInStock ? 'Out of Stock' : 'Move to Cart'}
                       </button>
 
                       {/* Added Date */}
-                      <p className="text-xs text-gray-400 font-light">
-                        Added {new Date(item.addedDate).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </p>
+                      {item.addedAt && (
+                        <p className="text-xs text-gray-400 font-light">
+                          Added {new Date(item.addedAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -312,6 +297,52 @@ const WishlistPage = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-6 space-y-3">
+                    <Link
+                      to="/shop"
+                      className="w-full bg-black text-white py-3 text-sm font-light tracking-widest uppercase hover:bg-gray-800 transition duration-300 block text-center"
+                    >
+                      Continue Shopping
+                    </Link>
+                    
+                    {getInStockCount() > 0 && (
+                      <button
+                        onClick={handleMoveAllToCart}
+                        className="w-full border border-black text-black py-3 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
+                      >
+                        Move All to Cart
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Benefits Section */}
+                <div className="border border-gray-200 p-6">
+                  <h3 className="text-lg font-light tracking-widest uppercase mb-4">
+                    Wishlist Benefits
+                  </h3>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Save items you love</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Get notified when items go on sale</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Quickly move items to cart</span>
+                    </li>
+                  </ul>
                 </div>               
               </div>
             </div>

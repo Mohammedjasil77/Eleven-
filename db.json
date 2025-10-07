@@ -7,9 +7,36 @@
       "password": "hashed_password_123",
       "role": "user",
       "isBlock": false,
-      "cart": [],
+      "cart": [
+        {
+          "id": "1759672547865",
+          "quantity": 12
+        }
+      ],
       "orders": [],
-      "wishlist": [],
+      "wishlist": [
+        {
+          "id": "1759740772802",
+          "productId": "5",
+          "size": "M",
+          "color": "Default",
+          "addedAt": "2025-10-06T08:52:52.802Z"
+        },
+        {
+          "id": "1759740920391",
+          "productId": "2",
+          "size": "M",
+          "color": "Default",
+          "addedAt": "2025-10-06T08:55:20.391Z"
+        },
+        {
+          "id": "1759740988796",
+          "productId": "6",
+          "size": "M",
+          "color": "Default",
+          "addedAt": "2025-10-06T08:56:28.796Z"
+        }
+      ],
       "created_at": "2025-09-28T10:00:00Z"
     },
     {
@@ -67,9 +94,53 @@
       "password": "12345678",
       "role": "user",
       "isBlock": false,
-      "cart": [],
+      "cart": [
+        {
+          "id": "1759743019010",
+          "productId": "5",
+          "size": "M",
+          "color": "Default",
+          "quantity": 3
+        },
+        {
+          "id": "1759743058189",
+          "productId": "1",
+          "size": "M",
+          "color": "Default",
+          "quantity": 1
+        },
+        {
+          "id": "1759746624184",
+          "productId": "2",
+          "size": "38",
+          "color": "black",
+          "quantity": 1
+        },
+        {
+          "id": "1759751724394",
+          "productId": "2",
+          "size": "M",
+          "color": "Default",
+          "quantity": 2
+        },
+        {
+          "id": "1759751921305",
+          "productId": "6",
+          "size": "M",
+          "color": "Default",
+          "quantity": 1
+        }
+      ],
       "orders": [],
-      "wishlist": [],
+      "wishlist": [
+        {
+          "id": "1759751850646",
+          "productId": "2",
+          "size": "M",
+          "color": "Default",
+          "addedAt": "2025-10-06T11:57:30.646Z"
+        }
+      ],
       "created_at": "2025-09-30T08:37:25.368Z"
     },
     {
@@ -83,6 +154,62 @@
       "orders": [],
       "wishlist": [],
       "created_at": "2025-10-04T11:27:51.558Z"
+    },
+    {
+      "id": "0602",
+      "name": "edvin",
+      "email": "edvin@gmail.com",
+      "password": "12345678",
+      "role": "user",
+      "isBlock": false,
+      "cart": [
+        {
+          "id": "1759752507661",
+          "productId": "2",
+          "size": "M",
+          "color": "Default",
+          "quantity": 2
+        },
+        {
+          "id": "1759754874293",
+          "productId": "6",
+          "size": "M",
+          "color": "Default",
+          "quantity": 1
+        },
+        {
+          "id": "1759754886777",
+          "productId": "5",
+          "size": "M",
+          "color": "Default",
+          "quantity": 1
+        },
+        {
+          "id": "1759754958469",
+          "productId": "4",
+          "size": "M",
+          "color": "Default",
+          "quantity": 1
+        }
+      ],
+      "orders": [],
+      "wishlist": [
+        {
+          "id": "1759752907988",
+          "productId": "2",
+          "size": "M",
+          "color": "Default",
+          "addedAt": "2025-10-06T12:15:07.988Z"
+        },
+        {
+          "id": "1759752923875",
+          "productId": "5",
+          "size": "M",
+          "color": "Default",
+          "addedAt": "2025-10-06T12:15:23.875Z"
+        }
+      ],
+      "created_at": "2025-10-06T12:07:53.096Z"
     }
   ],
   "products": [
@@ -94,6 +221,7 @@
       "originalPrice": 120000,
       "count": 15,
       "category": "sneakers",
+      "gender": "women",
       "images": [
         "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80",
         "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80"
@@ -123,8 +251,8 @@
       "originalPrice": 150000,
       "count": 8,
       "category": "platforms",
+      "gender": "women",
       "images": [
-        "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80",
         "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80"
       ],
       "colors": [
@@ -151,8 +279,8 @@
       "originalPrice": 89000,
       "count": 20,
       "category": "slippers",
+      "gender": "men",
       "images": [
-        "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80",
         "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80"
       ],
       "colors": [
@@ -180,9 +308,9 @@
       "originalPrice": 105000,
       "count": 25,
       "category": "sneakers",
+      "gender": "men",
       "images": [
-        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80"
       ],
       "colors": [
         "white",
@@ -210,9 +338,9 @@
       "originalPrice": 115000,
       "count": 12,
       "category": "loafers",
+      "gender": "men",
       "images": [
-        "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80"
       ],
       "colors": [
         "black",
@@ -233,86 +361,60 @@
     },
     {
       "id": "6",
-      "name": "Brixton Leather Boot",
-      "description": "Sophisticated leather boots for modern elegance, perfect for urban styling.",
-      "price": 110000,
-      "originalPrice": 135000,
-      "count": 10,
-      "category": "boots",
+      "name": "Kids Running Sneakers",
+      "description": "Comfortable and durable sneakers for active kids with fun designs.",
+      "price": 45000,
+      "originalPrice": 60000,
+      "count": 30,
+      "category": "sneakers",
+      "gender": "kids",
       "images": [
-        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1543508282-6319a3e2621f?auto=format&fit=crop&w=800&q=80"
       ],
       "colors": [
-        "black",
-        "tan"
+        "blue",
+        "red",
+        "green"
       ],
       "sizes": [
-        "38",
-        "39",
-        "40",
-        "41",
-        "42"
+        "28",
+        "30",
+        "32",
+        "34",
+        "36"
       ],
-      "featured": false,
+      "featured": true,
       "new": true,
       "isActive": true,
-      "created_at": "2025-09-21T16:30:00Z"
+      "created_at": "2025-09-26T11:00:00Z"
     },
     {
       "id": "7",
-      "name": "Sylvie Leather Pump",
-      "description": "Elegant pumps with refined architectural lines and luxurious leather finish.",
-      "price": 89000,
-      "originalPrice": 110000,
-      "count": 18,
-      "category": "heels",
+      "name": "Kids School Shoes",
+      "description": "Formal school shoes with comfortable fit and durable construction.",
+      "price": 35000,
+      "originalPrice": 45000,
+      "count": 25,
+      "category": "formal",
+      "gender": "kids",
       "images": [
-        "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1514989940723-7246f7ac6c31?auto=format&fit=crop&w=800&q=80"
       ],
       "colors": [
         "black",
-        "nude",
-        "red"
+        "brown"
       ],
       "sizes": [
-        "36",
-        "37",
-        "38",
-        "39"
+        "26",
+        "28",
+        "30",
+        "32",
+        "34"
       ],
       "featured": false,
       "new": false,
       "isActive": true,
-      "created_at": "2025-09-20T14:15:00Z"
-    },
-    {
-      "id": "8",
-      "name": "Dionysus Suede Boot",
-      "description": "Luxurious suede boots with iconic tiger head closure and dramatic appeal.",
-      "price": 135000,
-      "originalPrice": 165000,
-      "count": 6,
-      "category": "boots",
-      "images": [
-        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80"
-      ],
-      "colors": [
-        "green",
-        "brown"
-      ],
-      "sizes": [
-        "37",
-        "38",
-        "39",
-        "40"
-      ],
-      "featured": true,
-      "new": false,
-      "isActive": true,
-      "created_at": "2025-09-19T11:00:00Z"
+      "created_at": "2025-09-25T14:00:00Z"
     }
   ],
   "categories": [
@@ -350,6 +452,12 @@
       "id": "heels",
       "name": "Heels",
       "image": "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=400&q=80",
+      "count": 1
+    },
+    {
+      "id": "formal",
+      "name": "Formal",
+      "image": "https://images.unsplash.com/photo-1514989940723-7246f7ac6c31?auto=format&fit=crop&w=400&q=80",
       "count": 1
     }
   ]

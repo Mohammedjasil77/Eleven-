@@ -1,389 +1,304 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "../../Api/Apipage";
+import { AuthContext } from "./AuthContext";
 
-// Cart Context
 const CartContext = createContext();
 
-// Cart actions
-const CART_ACTIONS = {
-  SET_LOADING: 'SET_LOADING',
-  SET_CART_ITEMS: 'SET_CART_ITEMS',
-  ADD_TO_CART: 'ADD_TO_CART',
-  UPDATE_QUANTITY: 'UPDATE_QUANTITY',
-  REMOVE_FROM_CART: 'REMOVE_FROM_CART',
-  CLEAR_CART: 'CLEAR_CART',
-  SET_ERROR: 'SET_ERROR'
-};
-
-// Cart reducer
-const cartReducer = (state, action) => {
-  switch (action.type) {
-    case CART_ACTIONS.SET_LOADING:
-      return { ...state, loading: action.payload };
-
-    case CART_ACTIONS.SET_CART_ITEMS:
-      return { 
-        ...state, 
-        cartItems: action.payload, 
-        loading: false,
-        error: null 
-      };
-
-    case CART_ACTIONS.ADD_TO_CART:
-      const existingItem = state.cartItems.find(
-        item => item.productId === action.payload.productId && 
-                item.size === action.payload.size && 
-                item.color === action.payload.color
-      );
-
-      if (existingItem) {
-        // Update quantity if item already exists
-        return {
-          ...state,
-          cartItems: state.cartItems.map(item =>
-            item.id === existingItem.id
-              ? { ...item, quantity: item.quantity + action.payload.quantity }
-              : item
-          )
-        };
-      } else {
-        // Add new item
-        return {
-          ...state,
-          cartItems: [...state.cartItems, action.payload]
-        };
-      }
-
-    case CART_ACTIONS.UPDATE_QUANTITY:
-      return {
-        ...state,
-        cartItems: state.cartItems.map(item =>
-          item.id === action.payload.itemId
-            ? { ...item, quantity: action.payload.quantity }
-            : item
-        )
-      };
-
-    case CART_ACTIONS.REMOVE_FROM_CART:
-      return {
-        ...state,
-        cartItems: state.cartItems.filter(item => item.id !== action.payload)
-      };
-
-    case CART_ACTIONS.CLEAR_CART:
-      return {
-        ...state,
-        cartItems: []
-      };
-
-    case CART_ACTIONS.SET_ERROR:
-      return {
-        ...state,
-        error: action.payload,
-        loading: false
-      };
-
-    default:
-      return state;
-  }
-};
-
-// Initial state
-const initialState = {
-  cartItems: [],
-  loading: false,
-  error: null,
-  cartCount: 0,
-  cartTotal: 0
-};
-
-// Cart Provider Component
-export const CartProvider = ({ children, currentUserId = "1" }) => {
-  const [state, dispatch] = useReducer(cartReducer, initialState);
-
-  // Calculate derived values
-  useEffect(() => {
-    const cartCount = state.cartItems.reduce((total, item) => total + item.quantity, 0);
-    const cartTotal = state.cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-    
-    dispatch({
-      type: CART_ACTIONS.SET_CART_ITEMS,
-      payload: state.cartItems.map(item => ({
-        ...item,
-        // Ensure price is included for calculations
-        price: item.price || 0
-      }))
-    });
-  }, [state.cartItems]);
-
-  // Fetch cart from API
-  const fetchCart = async () => {
-    try {
-      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
-      
-      const userResponse = await fetch(`http://localhost:3001/users/${currentUserId}`);
-      const userData = await userResponse.json();
-      
-      if (userData.cart && userData.cart.length > 0) {
-        // Fetch product details for cart items
-        const productsResponse = await fetch('http://localhost:3001/products');
-        const productsData = await productsResponse.json();
-        
-        const cartItemsWithDetails = userData.cart.map(cartItem => {
-          const product = productsData.find(p => p.id === cartItem.productId);
-          return product ? {
-            ...cartItem,
-            name: product.name,
-            price: product.price,
-            originalPrice: product.originalPrice,
-            image: product.images[0],
-            category: product.category,
-            maxQuantity: product.count,
-            isInStock: product.count > 0
-          } : null;
-        }).filter(item => item !== null);
-        
-        dispatch({ type: CART_ACTIONS.SET_CART_ITEMS, payload: cartItemsWithDetails });
-      } else {
-        dispatch({ type: CART_ACTIONS.SET_CART_ITEMS, payload: [] });
-      }
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to load cart' });
-    }
-  };
-
-  // Add item to cart
-  const addToCart = async (productId, quantity = 1, size = null, color = null) => {
-    try {
-      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
-
-      // Fetch product details
-      const productsResponse = await fetch('http://localhost:3001/products');
-      const productsData = await productsResponse.json();
-      const product = productsData.find(p => p.id === productId);
-
-      if (!product) {
-        throw new Error('Product not found');
-      }
-
-      // Fetch current user data
-      const userResponse = await fetch(`http://localhost:3001/users/${currentUserId}`);
-      const userData = await userResponse.json();
-
-      const selectedSize = size || product.sizes[0];
-      const selectedColor = color || product.colors[0];
-
-      const newCartItem = {
-        id: `cart_${Date.now()}`,
-        productId: productId,
-        quantity: quantity,
-        size: selectedSize,
-        color: selectedColor,
-        addedAt: new Date().toISOString(),
-        name: product.name,
-        price: product.price,
-        originalPrice: product.originalPrice,
-        image: product.images[0],
-        category: product.category,
-        maxQuantity: product.count,
-        isInStock: product.count > 0
-      };
-
-      // Update local state optimistically
-      dispatch({ type: CART_ACTIONS.ADD_TO_CART, payload: newCartItem });
-
-      // Update backend
-      const existingCartItem = userData.cart?.find(
-        item => item.productId === productId && 
-                item.size === selectedSize && 
-                item.color === selectedColor
-      );
-
-      let updatedCart;
-      if (existingCartItem) {
-        updatedCart = userData.cart.map(item =>
-          item.id === existingCartItem.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        updatedCart = [...(userData.cart || []), {
-          id: newCartItem.id,
-          productId: newCartItem.productId,
-          quantity: newCartItem.quantity,
-          size: newCartItem.size,
-          color: newCartItem.color,
-          addedAt: newCartItem.addedAt
-        }];
-      }
-
-      await fetch(`http://localhost:3001/users/${currentUserId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cart: updatedCart
-        })
-      });
-
-      dispatch({ type: CART_ACTIONS.SET_LOADING, payload: false });
-      return { success: true, message: `${product.name} added to cart!` };
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to add item to cart' });
-      // Re-fetch cart to revert optimistic update
-      await fetchCart();
-      return { success: false, message: 'Failed to add item to cart' };
-    }
-  };
-
-  // Update quantity
-  const updateQuantity = async (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
-
-    try {
-      // Optimistic update
-      dispatch({ 
-        type: CART_ACTIONS.UPDATE_QUANTITY, 
-        payload: { itemId, quantity: newQuantity } 
-      });
-
-      // Update backend
-      const userResponse = await fetch(`http://localhost:3001/users/${currentUserId}`);
-      const userData = await userResponse.json();
-      
-      const updatedCart = userData.cart.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      );
-
-      await fetch(`http://localhost:3001/users/${currentUserId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cart: updatedCart
-        })
-      });
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to update quantity' });
-      await fetchCart(); // Revert on error
-    }
-  };
-
-  // Remove from cart
-  const removeFromCart = async (itemId) => {
-    try {
-      // Optimistic update
-      dispatch({ type: CART_ACTIONS.REMOVE_FROM_CART, payload: itemId });
-
-      // Update backend
-      const userResponse = await fetch(`http://localhost:3001/users/${currentUserId}`);
-      const userData = await userResponse.json();
-      
-      const updatedCart = userData.cart.filter(item => item.id !== itemId);
-
-      await fetch(`http://localhost:3001/users/${currentUserId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cart: updatedCart
-        })
-      });
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-      dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to remove item from cart' });
-      await fetchCart(); // Revert on error
-    }
-  };
-
-  // Clear cart
-  const clearCart = async () => {
-    try {
-      dispatch({ type: CART_ACTIONS.CLEAR_CART });
-
-      // Update backend
-      await fetch(`http://localhost:3001/users/${currentUserId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cart: []
-        })
-      });
-    } catch (error) {
-      console.error('Error clearing cart:', error);
-      dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to clear cart' });
-    }
-  };
-
-  // Calculate cart totals
-  const getCartTotals = () => {
-    const subtotal = state.cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-    const discount = state.cartItems.reduce((total, item) => {
-      const originalTotal = item.originalPrice * item.quantity;
-      const currentTotal = item.price * item.quantity;
-      return total + (originalTotal - currentTotal);
-    }, 0);
-    const total = subtotal;
-
-    return {
-      subtotal,
-      discount,
-      total,
-      itemCount: state.cartItems.reduce((count, item) => count + item.quantity, 0)
-    };
-  };
-
-  // Check if product is in cart
-  const isInCart = (productId, size = null, color = null) => {
-    return state.cartItems.some(item => 
-      item.productId === productId &&
-      (!size || item.size === size) &&
-      (!color || item.color === color)
-    );
-  };
-
-  // Value to be provided by context
-  const value = {
-    // State
-    cartItems: state.cartItems,
-    loading: state.loading,
-    error: state.error,
-    
-    // Computed values
-    cartCount: state.cartItems.reduce((total, item) => total + item.quantity, 0),
-    cartTotal: getCartTotals().total,
-    
-    // Actions
-    fetchCart,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-    getCartTotals,
-    isInCart
-  };
-
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
-};
-
-// Custom hook to use cart context
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 };
 
-export default CartContext;
+export const CartProvider = ({ children }) => {
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+ const {user}=useContext(AuthContext)
+  const currentUserId =  user?.id
+
+  // ✅ Fetch Cart Data
+  useEffect(() => {
+    const fetchCartData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data: userData } = await api.get(`/users/${currentUserId}`);
+
+        if (!userData.cart || userData.cart.length === 0) {
+          setCartItems([]);
+          return;
+        }
+
+        const { data: productsData } = await api.get("/products");
+
+        const mergedCartItems = userData.cart
+          .map((cartItem) => {
+            const product = productsData.find(
+              (p) => p.id === cartItem.productId
+            );
+            if (!product) {
+              console.warn(`Product ${cartItem.productId} not found`);
+              return null;
+            }
+
+            return {
+              id: cartItem.id,
+              productId: cartItem.productId,
+              name: product.name,
+              price: product.price,
+              originalPrice: product.originalPrice,
+              image: product.images[0],
+              size: cartItem.size,
+              color: cartItem.color,
+              quantity: cartItem.quantity,
+              maxQuantity: product.count,
+              category: product.category,
+              isInStock: product.count > 0,
+            };
+          })
+          .filter(Boolean);
+
+        setCartItems(mergedCartItems);
+      } catch (error) {
+        console.error("❌ Error fetching cart data:", error);
+        setError("Failed to load cart items");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCartData();
+  }, [currentUserId]);
+
+  // ✅ Add to Cart - Fixed version
+  const addToCart = async (productId, selectedSize = "M", selectedColor = "Default", quantity = 1) => {
+    try {
+      setError(null);
+
+      // First, get the product details
+      const { data: products } = await api.get("/products");
+      const product = products.find(p => p.id === productId);
+      
+      if (!product) {
+        setError("Product not found");
+        return { success: false, message: "Product not found" };
+      }
+
+      // Check stock availability
+      if (product.count < 1) {
+        setError("Product is out of stock");
+        return { success: false, message: "Product is out of stock" };
+      }
+
+      const { data: userData } = await api.get(`/users/${currentUserId}`);
+
+      const existingItem = userData.cart?.find(
+        (item) =>
+          item.productId === productId &&
+          item.size === selectedSize &&
+          item.color === selectedColor
+      );
+
+      let updatedCart;
+
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity > product.count) {
+          setError(`Only ${product.count} items available in stock`);
+          return { success: false, message: `Only ${product.count} items available in stock` };
+        }
+
+        updatedCart = userData.cart.map((item) =>
+          item.id === existingItem.id
+            ? { ...item, quantity: newQuantity }
+            : item
+        );
+      } else {
+        if (quantity > product.count) {
+          setError(`Only ${product.count} items available in stock`);
+          return { success: false, message: `Only ${product.count} items available in stock` };
+        }
+
+        const newCartItem = {
+          id: Date.now().toString(),
+          productId: productId,
+          size: selectedSize,
+          color: selectedColor,
+          quantity,
+        };
+        updatedCart = [...(userData.cart || []), newCartItem];
+      }
+
+      await api.patch(`/users/${currentUserId}`, { cart: updatedCart });
+
+      // Update local state
+      const { data: refreshedUser } = await api.get(`/users/${currentUserId}`);
+      const { data: allProducts } = await api.get("/products");
+
+      const mergedCart = (refreshedUser.cart || [])
+        .map((cartItem) => {
+          const product = allProducts.find((p) => p.id === cartItem.productId);
+          if (!product) return null;
+          return {
+            id: cartItem.id,
+            productId: cartItem.productId,
+            name: product.name,
+            price: product.price,
+            originalPrice: product.originalPrice,
+            image: product.images[0],
+            size: cartItem.size,
+            color: cartItem.color,
+            quantity: cartItem.quantity,
+            maxQuantity: product.count,
+            category: product.category,
+            isInStock: product.count > 0,
+          };
+        })
+        .filter(Boolean);
+
+      setCartItems(mergedCart);
+      return { success: true, message: "Product added to cart successfully" };
+    } catch (error) {
+      console.error("❌ Error adding to cart:", error);
+      setError("Failed to add product to cart");
+      return { success: false, message: "Failed to add product to cart" };
+    }
+  };
+
+  // ✅ Update Quantity
+  const updateQuantity = async (itemId, newQuantity) => {
+    if (newQuantity < 1) {
+      await removeItem(itemId);
+      return;
+    }
+
+    try {
+      setError(null);
+      
+      // Find the item to check stock
+      const itemToUpdate = cartItems.find(item => item.id === itemId);
+      if (!itemToUpdate) return;
+
+      // Check stock limit
+      if (newQuantity > itemToUpdate.maxQuantity) {
+        setError(`Only ${itemToUpdate.maxQuantity} items available in stock`);
+        return;
+      }
+
+      // Optimistic update
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        )
+      );
+
+      const { data: userData } = await api.get(`/users/${currentUserId}`);
+      const updatedCart = userData.cart.map((item) =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      );
+
+      await api.patch(`/users/${currentUserId}`, { cart: updatedCart });
+    } catch (error) {
+      console.error("❌ Error updating quantity:", error);
+      setError("Failed to update quantity");
+    }
+  };
+
+  // ✅ Remove Item
+  const removeItem = async (itemId) => {
+    try {
+      setError(null);
+
+      // Optimistic update
+      setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+
+      const { data: userData } = await api.get(`/users/${currentUserId}`);
+      const updatedCart = userData.cart.filter((item) => item.id !== itemId);
+
+      await api.patch(`/users/${currentUserId}`, { cart: updatedCart });
+    } catch (error) {
+      console.error("❌ Error removing item:", error);
+      setError("Failed to remove item from cart");
+      
+      // Revert optimistic update on error
+      const { data: userData } = await api.get(`/users/${currentUserId}`);
+      const { data: products } = await api.get("/products");
+      
+      const mergedCart = userData.cart
+        .map((cartItem) => {
+          const product = products.find((p) => p.id === cartItem.productId);
+          return product ? { ...cartItem, ...product } : null;
+        })
+        .filter(Boolean);
+      
+      setCartItems(mergedCart);
+    }
+  };
+
+  // ✅ Clear error
+  const clearError = () => setError(null);
+
+  // ✅ Get cart count
+  const getCartCount = () => 
+    cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  // ✅ Check if item is in cart
+  const isInCart = (productId, size = "M", color = "Default") => 
+    cartItems.some(item => 
+      item.productId === productId && 
+      item.size === size && 
+      item.color === color
+    );
+
+  // ✅ Clear entire cart
+  const clearCart = async () => {
+    try {
+      setCartItems([]);
+      await api.patch(`/users/${currentUserId}`, { cart: [] });
+    } catch (error) {
+      console.error("❌ Error clearing cart:", error);
+      setError("Failed to clear cart");
+    }
+  };
+
+  // ✅ Totals
+  const getSubtotal = () =>
+    cartItems.reduce((total, item) => total + (item.price || 0) * (item.quantity || 0), 0);
+
+  const getDiscount = () =>
+    cartItems.reduce((total, item) => {
+      const originalPrice = item.originalPrice || item.price || 0;
+      const currentPrice = item.price || 0;
+      const diff = Math.max(0, originalPrice - currentPrice);
+      return total + diff * (item.quantity || 0);
+    }, 0);
+
+  const getTotal = () => getSubtotal();
+
+  return (
+    <CartContext.Provider
+      value={{
+        cartItems,
+        loading,
+        error,
+        addToCart,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        clearError,
+        getCartCount,
+        isInCart,
+        getSubtotal,
+        getDiscount,
+        getTotal,
+        setCartItems,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
+};
