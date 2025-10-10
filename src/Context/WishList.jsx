@@ -16,12 +16,18 @@ export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const {user}=useContext(AuthContext)
-  const currentUserId =  user?.id
+  const { user } = useContext(AuthContext);
+  const currentUserId = user?.id;
 
   // ✅ Fetch Wishlist Data
   useEffect(() => {
     const fetchWishlistData = async () => {
+      if (!currentUserId) {
+        setWishlistItems([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
@@ -76,6 +82,11 @@ export const WishlistProvider = ({ children }) => {
 
   // ✅ Add to Wishlist
   const addToWishlist = async (product, selectedSize = "M", selectedColor = "Default") => {
+    if (!currentUserId) {
+      setError("Please login to add items to wishlist");
+      return false;
+    }
+
     try {
       setError(null);
 
@@ -129,6 +140,11 @@ export const WishlistProvider = ({ children }) => {
 
   // ✅ Remove from Wishlist
   const removeFromWishlist = async (itemId) => {
+    if (!currentUserId) {
+      setError("Please login to manage wishlist");
+      return false;
+    }
+
     try {
       setError(null);
 
@@ -159,21 +175,28 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
-  // ✅ NEW: Toggle Wishlist Function
-  const toggleWishlist = async (productId, selectedSize = "M", selectedColor = "Default") => {
-    console.log("product added")
+  // ✅ FIXED: Toggle Wishlist Function
+  const toggleWishlist = async (product, selectedSize = "M", selectedColor = "Default") => {
+    if (!currentUserId) {
+      setError("Please login to manage wishlist");
+      return { success: false, message: "Please login to manage wishlist" };
+    }
+
     try {
       setError(null);
       
       // First, check if the product is already in wishlist
       const existingItem = wishlistItems.find(item => 
-        item.productId === productId && 
+        item.productId === product.id && 
         item.size === selectedSize && 
         item.color === selectedColor
       );
 
+      console.log("Toggle wishlist - Product ID:", product.id);
+      console.log("Existing item:", existingItem);
+
       if (existingItem) {
-        // If it exists, remove it
+        // If it exists, remove it using the wishlist item ID
         const success = await removeFromWishlist(existingItem.id);
         if (success) {
           return { success: true, message: "Product removed from wishlist", action: "removed" };
@@ -182,15 +205,6 @@ export const WishlistProvider = ({ children }) => {
         }
       } else {
         // If it doesn't exist, add it
-        // We need to get the full product details first
-        const { data: products } = await api.get("/products");
-        const product = products.find(p => p.id === productId.id);
-        console.log(productId)
-        if (!product) {
-          setError("Product not found");
-          return { success: false, message: "Product not found" };
-        }
-
         const success = await addToWishlist(product, selectedSize, selectedColor);
         if (success) {
           return { success: true, message: "Product added to wishlist", action: "added" };
@@ -205,38 +219,7 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
-  // ✅ Move to Cart (remove from wishlist and add to cart)
-  const moveToCart = async (wishlistItem, cartContext) => {
-    try {
-      setError(null);
-
-      // Use cart context to add item
-      await cartContext.addToCart(
-        { 
-          id: wishlistItem.productId,
-          name: wishlistItem.name,
-          price: wishlistItem.price,
-          originalPrice: wishlistItem.originalPrice,
-          images: [wishlistItem.image],
-          count: wishlistItem.maxQuantity,
-          category: wishlistItem.category
-        },
-        wishlistItem.size,
-        wishlistItem.color,
-        1
-      );
-
-      // Remove from wishlist after successful add to cart
-      await removeFromWishlist(wishlistItem.id);
-      return true;
-    } catch (error) {
-      console.error("❌ Error moving item to cart:", error);
-      setError("Failed to move item to cart");
-      return false;
-    }
-  };
-
-  // ✅ Check if product is in wishlist
+  // ✅ Check if product is in wishlist (FIXED)
   const isInWishlist = (productId, size = "M", color = "Default") => {
     return wishlistItems.some(item => 
       item.productId === productId && 
@@ -244,6 +227,39 @@ export const WishlistProvider = ({ children }) => {
       item.color === color
     );
   };
+
+ // ✅ Move to Cart (remove from wishlist and add to cart) 
+const moveToCart = async (wishlistItem, { addToCart }) => {
+  try {
+    setError(null);
+    console.log('Moving to cart:', wishlistItem);
+
+    // Call addToCart with the correct parameters
+    const result = await addToCart(
+      wishlistItem.productId, // productId
+      wishlistItem.size || "M", // size
+      wishlistItem.color || "Default", // color
+      1 // quantity
+    );
+
+    console.log('Add to cart result:', result);
+
+    if (result && result.success) {
+      // Remove from wishlist after successful add to cart
+      await removeFromWishlist(wishlistItem.id);
+      return { success: true, message: "Item moved to cart successfully" };
+    } else {
+      return { 
+        success: false, 
+        message: result?.message || "Failed to add item to cart" 
+      };
+    }
+  } catch (error) {
+    console.error("❌ Error moving item to cart:", error);
+    setError("Failed to move item to cart");
+    return { success: false, message: "Failed to move item to cart" };
+  }
+};
 
   // ✅ Clear entire wishlist
   const clearWishlist = async () => {
@@ -270,7 +286,7 @@ export const WishlistProvider = ({ children }) => {
         error,
         addToWishlist,
         removeFromWishlist,
-        toggleWishlist, // ✅ Now included
+        toggleWishlist,
         moveToCart,
         isInWishlist,
         clearWishlist,

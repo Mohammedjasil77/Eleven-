@@ -1,64 +1,20 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../../../../Api/Apipage";
+import { useCart } from "../../../Context/CartContext";
 import { AuthContext } from "../../../Context/AuthContext";
+
 const CartPage = () => {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const {user}=useContext(AuthContext)
-    const currentUserId =  user?.id
-  // Fetch cart data for logged-in user
-  useEffect(() => {
-    const fetchCartData = async () => {
-      try {
-        setLoading(true);
-
-        // 1. Fetch user data to get cart items
-        const { data: userData } = await api.get(`/users/${currentUserId}`);
-
-        if (!userData.cart || userData.cart.length === 0) {
-          setCartItems([]);
-          setLoading(false);
-          return;
-        }
-
-        // 2. Fetch all products
-        const { data: productsData } = await api.get("/products");
-
-        // 3. Merge cart items with product details
-        const mergedCartItems = userData.cart
-          .map((cartItem) => {
-            const product = productsData.find((p) => p.id === cartItem.productId);
-            if (!product) return null;
-
-            return {
-              id: cartItem.id,
-              productId: cartItem.productId,
-              name: product.name,
-              price: product.price,
-              originalPrice: product.originalPrice,
-              image: product.images[0],
-              size: cartItem.size,
-              color: cartItem.color,
-              quantity: cartItem.quantity,
-              maxQuantity: product.count,
-              category: product.category,
-              isInStock: product.count > 0,
-            };
-          })
-          .filter((item) => item !== null);
-
-        setCartItems(mergedCartItems);
-      } catch (error) {
-        console.error("Error fetching cart data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCartData();
-  }, [currentUserId]);
+  const { user } = useContext(AuthContext);
+  const { 
+    cartItems, 
+    loading, 
+    updateQuantity, 
+    removeItem, 
+    getSubtotal, 
+    getDiscount, 
+    getTotal 
+  } = useCart();
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-IN", {
@@ -67,58 +23,14 @@ const CartPage = () => {
       maximumFractionDigits: 0,
     }).format(price);
 
-  // Update quantity in cart
-  const updateQuantity = async (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
-
-    try {
-      // Optimistic UI update
-      setCartItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
-        )
-      );
-
-      const { data: userData } = await api.get(`/users/${currentUserId}`);
-      const updatedCart = userData.cart.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      );
-
-      await api.patch(`/users/${currentUserId}`, { cart: updatedCart });
-    } catch (error) {
-      console.error("Error updating quantity:", error);
+  const handleCheckout = () => {
+    if (!user) {
+      alert("Please login to proceed to checkout");
+      navigate("/login");
+      return;
     }
+    navigate("/buy-now");
   };
-
-  // Remove item from cart
-  const removeItem = async (itemId) => {
-    try {
-      // Optimistic UI update
-      setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
-
-      const { data: userData } = await api.get(`/users/${currentUserId}`);
-      const updatedCart = userData.cart.filter((item) => item.id !== itemId);
-
-      await api.patch(`/users/${currentUserId}`, { cart: updatedCart });
-    } catch (error) {
-      console.error("Error removing item:", error);
-    }
-  };
-
-  // Calculate prices
-  const getSubtotal = () =>
-    cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-
-  const getDiscount = () =>
-    cartItems.reduce((total, item) => {
-      const originalTotal = item.originalPrice * item.quantity;
-      const currentTotal = item.price * item.quantity;
-      return total + (originalTotal - currentTotal);
-    }, 0);
-
-  const getTotal = () => getSubtotal();
-
-  const handleCheckout = () => navigate("/checkout");
 
   if (loading) {
     return (
@@ -328,10 +240,17 @@ const CartPage = () => {
 
                 <button
                   onClick={handleCheckout}
+                  
                   className="w-full bg-black text-white py-4 text-sm font-light tracking-widest uppercase hover:bg-gray-800 transition duration-300 mb-4"
                 >
                   Proceed to Checkout
                 </button>
+
+                {!user && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Please login to checkout
+                  </p>
+                )}
               </div>
             </div>
           </div>

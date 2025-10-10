@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useCart } from "../../../Context/CartContext";
+import { useWishlist } from "../../../Context/WishList";
+import ProductCard from "../../../Components/ProductCard";
 
 const NewArrivals = () => {
   const [newProducts, setNewProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   useEffect(() => {
-    // Simulate API call to fetch new arrivals
     const fetchNewArrivals = async () => {
       try {
         const response = await fetch('/db.json');
@@ -30,6 +34,32 @@ const NewArrivals = () => {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(price);
+  };
+
+  // Quick add to cart function
+  const handleQuickAddToCart = async (product, size = "M") => {
+    try {
+      const result = await addToCart(product.id, size, "Default", 1);
+      if (result.success) {
+        alert("Product added to cart successfully!");
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert("Failed to add product to cart");
+    }
+  };
+
+  // Quick wishlist toggle
+  const handleQuickWishlist = async (product) => {
+    try {
+      const result = await toggleWishlist(product);
+      alert(result.message);
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      alert("Failed to update wishlist");
+    }
   };
 
   if (loading) {
@@ -92,97 +122,11 @@ const NewArrivals = () => {
           </p>
         </div>
 
-        {/* Products Grid */}
+        {/* Option 1: Use your existing ProductCard component (Recommended) */}
         {newProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {newProducts.map(product => (
-              <div key={product.id} className="group">
-                <div className="relative aspect-[3/4] overflow-hidden mb-4">
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700 ease-out"
-                  />
-                  
-                  {/* New Arrival Badge */}
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-red-600 text-white px-3 py-1 text-xs tracking-widest uppercase font-light">
-                      Just In
-                    </span>
-                  </div>
-
-                  {/* Featured Badge */}
-                  {product.featured && (
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-black text-white px-3 py-1 text-xs tracking-widest uppercase font-light">
-                        Featured
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Discount Badge */}
-                  {product.originalPrice > product.price && (
-                    <div className="absolute top-16 left-4">
-                      <span className="bg-white text-black px-3 py-1 text-xs tracking-widest uppercase font-light">
-                        -{Math.round((1 - product.price / product.originalPrice) * 100)}%
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Out of Stock Overlay */}
-                  {product.count === 0 && (
-                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                      <span className="text-black text-sm tracking-widest uppercase font-light">
-                        Out of Stock
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Quick Actions Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300 flex items-end justify-between p-6">
-                    <div className="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-500">
-                      <button className="bg-white text-black px-6 py-3 text-xs tracking-widest uppercase font-light hover:bg-gray-100 transition duration-300">
-                        Quick View
-                      </button>
-                    </div>
-                    <div className="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-500 delay-100">
-                      <button className="bg-white text-black p-3 text-xs tracking-widest uppercase font-light hover:bg-gray-100 transition duration-300">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Product Info */}
-                <div className="text-center">
-                  <h3 className="text-lg font-light tracking-wide mb-2">{product.name}</h3>
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <p className="text-gray-600 font-light tracking-widest">
-                      {formatPrice(product.price)}
-                    </p>
-                    {product.originalPrice > product.price && (
-                      <p className="text-gray-400 text-sm font-light line-through">
-                        {formatPrice(product.originalPrice)}
-                      </p>
-                    )}
-                  </div>
-                  <p className="text-gray-500 text-xs uppercase tracking-widest font-light mb-3">
-                    {product.category}
-                  </p>
-                  <div className="mt-3 opacity-0 group-hover:opacity-100 transition duration-300">
-                    <button 
-                      disabled={product.count === 0}
-                      className={`text-xs tracking-widest uppercase font-light border-b border-black hover:opacity-70 transition duration-300 ${
-                        product.count === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      {product.count === 0 ? 'Out of Stock' : 'Add to Cart'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         ) : (
@@ -219,52 +163,6 @@ const NewArrivals = () => {
             </Link>
           </div>
         )}
-      </section>
-
-      {/* Exclusive Section */}
-      <section className="bg-gray-50 py-20 border-t border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-serif font-light mb-6 tracking-wide">
-            BE THE FIRST TO KNOW
-          </h2>
-          <p className="text-gray-600 text-lg font-light mb-8 max-w-2xl mx-auto tracking-wide">
-            Sign up for exclusive early access to new collections, 
-            private sales, and special events.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="ENTER YOUR EMAIL"
-              className="flex-1 px-4 py-3 border border-gray-300 text-sm font-light tracking-widest focus:outline-none focus:border-black transition duration-300 text-center sm:text-left bg-white"
-            />
-            <button className="bg-black text-white px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-gray-800 transition duration-300 whitespace-nowrap">
-              Get Early Access
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Instagram Section */}
-      <section className="py-16 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-serif font-light mb-4 tracking-wide">
-            FOLLOW OUR STORY
-          </h2>
-          <p className="text-gray-600 font-light mb-8 tracking-wide">
-            Discover more behind the scenes on Instagram
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="aspect-square bg-gray-100 relative group cursor-pointer">
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition duration-300 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition duration-300" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                  </svg>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
     </div>
   );

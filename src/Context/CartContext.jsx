@@ -16,20 +16,31 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
- const {user}=useContext(AuthContext)
-  const currentUserId =  user?.id
+  const { user } = useContext(AuthContext);
+  
+  const currentUserId = user?.id;
 
-  // ✅ Fetch Cart Data
+  // ✅ Fetch Cart Data - Fixed with proper user check
   useEffect(() => {
     const fetchCartData = async () => {
+      // Don't fetch if no user is logged in
+      if (!currentUserId) {
+        console.log("No user ID available, setting empty cart");
+        setCartItems([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
-
+        console.log("Fetching cart for user:", currentUserId);
+        
         const { data: userData } = await api.get(`/users/${currentUserId}`);
 
         if (!userData.cart || userData.cart.length === 0) {
           setCartItems([]);
+          setLoading(false);
           return;
         }
 
@@ -51,7 +62,7 @@ export const CartProvider = ({ children }) => {
               name: product.name,
               price: product.price,
               originalPrice: product.originalPrice,
-              image: product.images[0],
+              image: product.images?.[0] || "/placeholder-image.jpg",
               size: cartItem.size,
               color: cartItem.color,
               quantity: cartItem.quantity,
@@ -66,6 +77,9 @@ export const CartProvider = ({ children }) => {
       } catch (error) {
         console.error("❌ Error fetching cart data:", error);
         setError("Failed to load cart items");
+        
+        // If user doesn't exist or other error, set empty cart
+        setCartItems([]);
       } finally {
         setLoading(false);
       }
@@ -74,8 +88,14 @@ export const CartProvider = ({ children }) => {
     fetchCartData();
   }, [currentUserId]);
 
-  // ✅ Add to Cart - Fixed version
+  // ✅ Add to Cart - Fixed with user check
   const addToCart = async (productId, selectedSize = "M", selectedColor = "Default", quantity = 1) => {
+    // Check if user is logged in
+    if (!currentUserId) {
+      setError("Please login to add items to cart");
+      return { success: false, message: "Please login to add items to cart" };
+    }
+
     try {
       setError(null);
 
@@ -149,7 +169,7 @@ export const CartProvider = ({ children }) => {
             name: product.name,
             price: product.price,
             originalPrice: product.originalPrice,
-            image: product.images[0],
+            image: product.images?.[0] || "/placeholder-image.jpg",
             size: cartItem.size,
             color: cartItem.color,
             quantity: cartItem.quantity,
@@ -169,8 +189,13 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // ✅ Update Quantity
+  // ✅ Update Quantity - Fixed with user check
   const updateQuantity = async (itemId, newQuantity) => {
+    if (!currentUserId) {
+      setError("Please login to manage cart");
+      return;
+    }
+
     if (newQuantity < 1) {
       await removeItem(itemId);
       return;
@@ -208,8 +233,13 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // ✅ Remove Item
+  // ✅ Remove Item - Fixed with user check
   const removeItem = async (itemId) => {
+    if (!currentUserId) {
+      setError("Please login to manage cart");
+      return;
+    }
+
     try {
       setError(null);
 
@@ -228,10 +258,19 @@ export const CartProvider = ({ children }) => {
       const { data: userData } = await api.get(`/users/${currentUserId}`);
       const { data: products } = await api.get("/products");
       
-      const mergedCart = userData.cart
+      const mergedCart = (userData.cart || [])
         .map((cartItem) => {
           const product = products.find((p) => p.id === cartItem.productId);
-          return product ? { ...cartItem, ...product } : null;
+          return product ? { 
+            ...cartItem, 
+            name: product.name,
+            price: product.price,
+            originalPrice: product.originalPrice,
+            image: product.images?.[0] || "/placeholder-image.jpg",
+            maxQuantity: product.count,
+            category: product.category,
+            isInStock: product.count > 0,
+          } : null;
         })
         .filter(Boolean);
       
@@ -254,8 +293,13 @@ export const CartProvider = ({ children }) => {
       item.color === color
     );
 
-  // ✅ Clear entire cart
+  // ✅ Clear entire cart - Fixed with user check
   const clearCart = async () => {
+    if (!currentUserId) {
+      setCartItems([]);
+      return;
+    }
+
     try {
       setCartItems([]);
       await api.patch(`/users/${currentUserId}`, { cart: [] });
@@ -295,7 +339,6 @@ export const CartProvider = ({ children }) => {
         getSubtotal,
         getDiscount,
         getTotal,
-        setCartItems,
       }}
     >
       {children}

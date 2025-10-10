@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "../../../Context/CartContext";
 import { useWishlist } from "../../../Context/WishList";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const QuickViewModal = ({ product, isOpen, onClose }) => {
   const [selectedSize, setSelectedSize] = useState("");
@@ -10,7 +10,11 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
   const [activeImage, setActiveImage] = useState(0);
   
   const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { toggleWishlist, isInWishlist, wishlistItems } = useWishlist();
+  const navigate = useNavigate();
+
+  // Check if product is in wishlist
+  const isWishlisted = isInWishlist(product?.id, selectedSize, selectedColor);
 
   useEffect(() => {
     if (product) {
@@ -55,12 +59,59 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
     }
   };
 
-  const handleWishlistToggle = async () => {
-    const result = await toggleWishlist(product);
+  // FIXED: Buy Now function
+  const handleBuyNow = async () => {
+    if (!selectedSize || !selectedColor) {
+      alert("Please select size and color");
+      return;
+    }
+
+    // First add to cart
+    const result = await addToCart(product.id, selectedSize, selectedColor, quantity);
     if (result.success) {
-      alert(result.message);
+      // Then navigate to buy-now page
+      navigate("/buy-now", { 
+        state: { 
+          product: {
+            ...product,
+            selectedSize: selectedSize,
+            selectedColor: selectedColor,
+            quantity: quantity
+          }
+        } 
+      });
+      onClose(); // Close the modal
     } else {
       alert(result.message);
+    }
+  };
+
+  // FIXED: Proper wishlist toggle function
+  const handleWishlistToggle = async () => {
+    console.log('Product ID:', product?.id);
+    console.log('Selected Size:', selectedSize);
+    console.log('Selected Color:', selectedColor);
+    console.log('Current wishlist status:', isWishlisted);
+    
+    try {
+      // Use toggleWishlist for both add and remove operations
+      const result = await toggleWishlist(product, selectedSize, selectedColor);
+      
+      console.log('Wishlist operation result:', result);
+      
+      if (result.success) {
+        // Show appropriate message based on the action
+        if (result.action === "added") {
+          alert("Product added to wishlist!");
+        } else if (result.action === "removed") {
+          alert("Product removed from wishlist!");
+        }
+      } else {
+        alert(result.message || "Operation failed");
+      }
+    } catch (error) {
+      console.error('Wishlist toggle error:', error);
+      alert("An error occurred. Please try again.");
     }
   };
 
@@ -70,8 +121,6 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
       setQuantity(newQuantity);
     }
   };
-
-  const isWishlisted = isInWishlist(product?.id);
 
   if (!isOpen || !product) return null;
 
@@ -94,6 +143,11 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+
+        {/* Debug Info - Remove in production */}
+        <div className="absolute top-4 left-4 bg-yellow-100 p-2 rounded text-xs">
+          Wishlist: {isWishlisted ? 'IN' : 'OUT'} | Size: {selectedSize} | Color: {selectedColor}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Product Images */}
@@ -247,27 +301,39 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={product.count === 0 || !selectedSize || !selectedColor}
-                  className="flex-1 bg-black text-white py-3 px-6 text-sm tracking-widest uppercase font-light hover:bg-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Add to Cart
-                </button>
-                
+              <div className="space-y-3 pt-4">
+                {/* Buy Now & Add to Cart Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={product.count === 0 || !selectedSize || !selectedColor}
+                    className="flex-1 bg-red-600 text-white py-3 px-6 text-sm tracking-widest uppercase font-light hover:bg-red-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Buy Now
+                  </button>
+                  
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={product.count === 0 || !selectedSize || !selectedColor}
+                    className="flex-1 bg-black text-white py-3 px-6 text-sm tracking-widest uppercase font-light hover:bg-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
+                {/* Wishlist Button - Full Width */}
                 <button
                   onClick={handleWishlistToggle}
-                  className={`p-3 border transition duration-300 ${
+                  disabled={product.count === 0}
+                  className={`w-full py-3 px-6 border text-sm tracking-widest uppercase font-light transition duration-300 flex items-center justify-center gap-2 ${
                     isWishlisted 
-                      ? "border-red-500 bg-red-50 text-red-500" 
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                  aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                      ? "border-red-500 bg-red-50 text-red-500 hover:bg-red-100" 
+                      : "border-gray-300 text-gray-700 hover:border-black hover:bg-gray-50"
+                  } ${product.count === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <svg
-                    className={`w-5 h-5 transition duration-300 ${
-                      isWishlisted ? "fill-red-500 stroke-red-500" : "stroke-black fill-transparent"
+                    className={`w-4 h-4 transition duration-300 ${
+                      isWishlisted ? "fill-red-500 stroke-red-500" : "stroke-current fill-transparent"
                     }`}
                     viewBox="0 0 24 24"
                   >
@@ -278,18 +344,8 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                       d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                     />
                   </svg>
+                  {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
                 </button>
-              </div>
-
-              {/* View Full Details */}
-              <div className="pt-4 border-t border-gray-200">
-                <Link 
-                  to={`/product/${product.id}`}
-                  className="text-sm text-gray-600 hover:text-black transition duration-300 underline"
-                  onClick={onClose}
-                >
-                  View full product details
-                </Link>
               </div>
             </div>
           </div>

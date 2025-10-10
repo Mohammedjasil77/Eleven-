@@ -1,10 +1,10 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../Api/Apipage";
-import { AuthContext } from "../../Context/AuthContext"; // ✅ import context
+import { AuthContext } from "../../Context/AuthContext";
 
 const Login = () => {
-  const { login } = useContext(AuthContext); // ✅ get login function from context
+  const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -28,14 +28,15 @@ const Login = () => {
       if (response.data.length > 0) {
         const user = response.data[0];
 
-        // ✅ Use context to store user (updates global state + localStorage)
         login(user);
 
         setSuccess("✅ Login successful!");
-        alert("Login successful!");
-
-        // ✅ Redirect to home page
-        navigate("/");
+        
+        if (user.role === "admin") {
+          navigate("/admin-dashbord"); 
+        } else {
+          navigate("/"); 
+        }
       } else {
         setError("❌ Invalid email or password");
       }

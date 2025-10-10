@@ -43,7 +43,7 @@
       "id": "2",
       "name": "Admin User",
       "email": "admin@shoestore.com",
-      "password": "hashed_admin_password_456",
+      "password": "123456789",
       "role": "admin",
       "isBlock": false,
       "cart": [],
@@ -96,51 +96,22 @@
       "isBlock": false,
       "cart": [
         {
-          "id": "1759743019010",
-          "productId": "5",
-          "size": "M",
-          "color": "Default",
-          "quantity": 3
-        },
-        {
-          "id": "1759743058189",
-          "productId": "1",
-          "size": "M",
-          "color": "Default",
-          "quantity": 1
-        },
-        {
-          "id": "1759746624184",
+          "id": "1760084077823",
           "productId": "2",
-          "size": "38",
+          "size": "39",
+          "color": "Default",
+          "quantity": 8
+        },
+        {
+          "id": "1760084516662",
+          "productId": "2",
+          "size": "36",
           "color": "black",
-          "quantity": 1
-        },
-        {
-          "id": "1759751724394",
-          "productId": "2",
-          "size": "M",
-          "color": "Default",
-          "quantity": 2
-        },
-        {
-          "id": "1759751921305",
-          "productId": "6",
-          "size": "M",
-          "color": "Default",
-          "quantity": 1
+          "quantity": 7
         }
       ],
       "orders": [],
-      "wishlist": [
-        {
-          "id": "1759751850646",
-          "productId": "2",
-          "size": "M",
-          "color": "Default",
-          "addedAt": "2025-10-06T11:57:30.646Z"
-        }
-      ],
+      "wishlist": [],
       "created_at": "2025-09-30T08:37:25.368Z"
     },
     {
@@ -164,54 +135,108 @@
       "isBlock": false,
       "cart": [
         {
-          "id": "1759752507661",
-          "productId": "2",
-          "size": "M",
-          "color": "Default",
-          "quantity": 2
-        },
-        {
-          "id": "1759754874293",
-          "productId": "6",
+          "id": "1759904040598",
+          "productId": "1",
           "size": "M",
           "color": "Default",
           "quantity": 1
         },
         {
-          "id": "1759754886777",
+          "id": "1759907635425",
           "productId": "5",
-          "size": "M",
-          "color": "Default",
+          "size": "37",
+          "color": "black",
           "quantity": 1
-        },
+        }
+      ],
+      "orders": [],
+      "wishlist": [],
+      "created_at": "2025-10-06T12:07:53.096Z"
+    },
+    {
+      "id": "10a1",
+      "name": "manam",
+      "email": "manam@gmail.com",
+      "password": "12345678",
+      "role": "user",
+      "isBlock": false,
+      "cart": [
         {
-          "id": "1759754958469",
-          "productId": "4",
+          "id": "1759917584413",
+          "productId": "2",
+          "size": "36",
+          "color": "black",
+          "quantity": 1
+        }
+      ],
+      "orders": [],
+      "wishlist": [],
+      "created_at": "2025-10-08T09:44:59.514Z"
+    },
+    {
+      "id": "8988",
+      "name": "goku",
+      "email": "gokul@gmail.com",
+      "password": "123456789",
+      "role": "user",
+      "isBlock": false,
+      "cart": [
+        {
+          "id": "1759992604245",
+          "productId": "2",
           "size": "M",
           "color": "Default",
           "quantity": 1
         }
       ],
       "orders": [],
-      "wishlist": [
+      "wishlist": [],
+      "created_at": "2025-10-09T05:54:55.206Z"
+    },
+    {
+      "id": "56a0",
+      "name": "ashraf",
+      "email": "ashraf@gmail.com",
+      "password": "12345678",
+      "role": "user",
+      "isBlock": false,
+      "cart": [
         {
-          "id": "1759752907988",
+          "id": "1759994913043",
           "productId": "2",
-          "size": "M",
+          "size": "37",
           "color": "Default",
-          "addedAt": "2025-10-06T12:15:07.988Z"
+          "quantity": 1
         },
         {
-          "id": "1759752923875",
+          "id": "1759996120567",
           "productId": "5",
-          "size": "M",
-          "color": "Default",
-          "addedAt": "2025-10-06T12:15:23.875Z"
+          "size": "37",
+          "color": "black",
+          "quantity": 7
+        },
+        {
+          "id": "1759996510915",
+          "productId": "2",
+          "size": "36",
+          "color": "black",
+          "quantity": 2
         }
       ],
-      "created_at": "2025-10-06T12:07:53.096Z"
+      "orders": [],
+      "wishlist": [
+        {
+          "id": "1759997486007",
+          "productId": "2",
+          "size": "36",
+          "color": "black",
+          "addedAt": "2025-10-09T08:11:26.007Z"
+        }
+      ],
+      "created_at": "2025-10-09T06:56:42.488Z"
     }
   ],
+  
   "products": [
     {
       "id": "1",
@@ -390,31 +415,32 @@
     },
     {
       "id": "7",
-      "name": "Kids School Shoes",
-      "description": "Formal school shoes with comfortable fit and durable construction.",
-      "price": 35000,
-      "originalPrice": 45000,
-      "count": 25,
-      "category": "formal",
-      "gender": "kids",
+      "name": "Boots",
+      "description": "Comfortable and durable sneakers for active kids with fun designs.",
+      "price": 15000,
+      "originalPrice": 60000,
+      "count": 1,
+      "category": "Boots",
+      "gender": "men",
       "images": [
-        "https://images.unsplash.com/photo-1514989940723-7246f7ac6c31?auto=format&fit=crop&w=800&q=80"
+        "https://images.unsplash.com/photo-1605812860427-4024433a70fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2035&q=80"
       ],
       "colors": [
-        "black",
-        "brown"
+        "blue",
+        "red",
+        "green"
       ],
       "sizes": [
-        "26",
         "28",
         "30",
         "32",
-        "34"
+        "34",
+        "36"
       ],
-      "featured": false,
-      "new": false,
+      "featured": true,
+      "new": true,
       "isActive": true,
-      "created_at": "2025-09-25T14:00:00Z"
+      "created_at": "2025-09-26T11:00:00Z"
     }
   ],
   "categories": [
@@ -422,7 +448,7 @@
       "id": "sneakers",
       "name": "Sneakers",
       "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=400&q=80",
-      "count": 2
+      "count": 3
     },
     {
       "id": "platforms",
@@ -445,8 +471,8 @@
     {
       "id": "boots",
       "name": "Boots",
-      "image": "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=400&q=80",
-      "count": 2
+      "image": "https://images.unsplash.com/photo-1605812860427-4024433a70fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2035&q=80",
+      "count": 1
     },
     {
       "id": "heels",
@@ -462,3 +488,4 @@
     }
   ]
 }
+

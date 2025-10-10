@@ -3,24 +3,24 @@ import { Link } from "react-router-dom";
 import { useWishlist } from "../../../Context/WishList";
 import { useCart } from "../../../Context/CartContext";
 const WishlistPage = () => {
-  const { 
-    wishlistItems, 
-    loading, 
-    error, 
-    removeFromWishlist, 
-    moveToCart, 
+  const {
+    wishlistItems,
+    loading,
+    error,
+    removeFromWishlist,
+    moveToCart,
     clearWishlist,
     clearError,
-    getWishlistCount
+    getWishlistCount,
   } = useWishlist();
-  
+
   const { addToCart } = useCart();
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
     }).format(price);
   };
 
@@ -34,17 +34,8 @@ const WishlistPage = () => {
     }
   };
 
-  const handleRemoveFromWishlist = async (itemId) => {
-    const result = await removeFromWishlist(itemId);
-    if (result.success) {
-      console.log(result.message);
-    } else {
-      alert(result.message);
-    }
-  };
-
   const handleMoveAllToCart = async () => {
-    const inStockItems = wishlistItems.filter(item => item.isInStock);
+    const inStockItems = wishlistItems.filter((item) => item.isInStock);
     if (inStockItems.length === 0) {
       alert("No items in stock to move to cart");
       return;
@@ -59,11 +50,16 @@ const WishlistPage = () => {
         successCount++;
       } else {
         errorCount++;
+        console.error("Failed to move item:", item.id, result.message);
       }
     }
 
     if (successCount > 0) {
-      alert(`Successfully moved ${successCount} items to cart${errorCount > 0 ? `, ${errorCount} failed` : ''}`);
+      alert(
+        `Successfully moved ${successCount} items to cart${
+          errorCount > 0 ? `, ${errorCount} failed` : ""
+        }`
+      );
     } else {
       alert("Failed to move items to cart");
     }
@@ -74,7 +70,7 @@ const WishlistPage = () => {
   };
 
   const getInStockCount = () => {
-    return wishlistItems.filter(item => item.isInStock).length;
+    return wishlistItems.filter((item) => item.isInStock).length;
   };
 
   if (loading) {
@@ -82,7 +78,9 @@ const WishlistPage = () => {
       <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-          <p className="text-sm font-light tracking-widest uppercase">Loading Wishlist</p>
+          <p className="text-sm font-light tracking-widest uppercase">
+            Loading Wishlist
+          </p>
         </div>
       </div>
     );
@@ -93,7 +91,7 @@ const WishlistPage = () => {
       <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
-          <button 
+          <button
             onClick={clearError}
             className="border border-black text-black px-6 py-2 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
           >
@@ -136,7 +134,7 @@ const WishlistPage = () => {
                     Items you've added to your wishlist
                   </p>
                 </div>
-                
+
                 <div className="flex gap-3 mt-4 sm:mt-0">
                   {getInStockCount() > 0 && (
                     <button
@@ -160,24 +158,35 @@ const WishlistPage = () => {
                 {wishlistItems.map((item) => (
                   <div key={item.id} className="group">
                     <div className="relative aspect-[3/4] overflow-hidden mb-4">
-                      <Link to={`/product/${item.productId}`} className="block h-full">
+                      <Link
+                        to={`/product/${item.productId}`}
+                        className="block h-full"
+                      >
                         <img
                           src={item.image}
                           alt={item.name}
                           className="w-full h-full object-cover transform group-hover:scale-105 transition duration-700 ease-out"
                         />
                       </Link>
-                      
+
+                      {/* Remove Button */}
                       {/* Remove Button */}
                       <button
-                        onClick={() => handleRemoveFromWishlist(item.id)}
-                        className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full opacity-100 group-hover:opacity-100 transition duration-300 hover:bg-white"
+                        onClick={() => removeFromWishlist(item.id)}
+                        className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full opacity-100 group-hover:opacity-100 transition duration-300 hover:bg-white z-50"
                       >
-                        <svg 
-                          className="w-4 h-4 fill-red-500 stroke-red-500"
+                        <svg
+                          className="w-4 h-4 text-gray-600 hover:text-red-500 transition duration-300"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </button>
 
@@ -190,17 +199,17 @@ const WishlistPage = () => {
                         </div>
                       )}
 
-                      {/* Quick View */}
+                      {/* Quick View
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300 flex items-end justify-start">
                         <div className="p-6 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-500">
-                          <Link 
+                          <Link
                             to={`/product/${item.productId}`}
                             className="bg-white text-black px-4 py-2 text-xs tracking-widest uppercase font-light hover:bg-gray-100 transition duration-300 inline-block"
                           >
                             View Details
                           </Link>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
 
                     {/* Product Info */}
@@ -210,7 +219,7 @@ const WishlistPage = () => {
                           {item.name}
                         </h3>
                       </Link>
-                      
+
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <p className="text-gray-600 font-light tracking-widest">
                           {formatPrice(item.price)}
@@ -221,7 +230,7 @@ const WishlistPage = () => {
                           </p>
                         )}
                       </div>
-                      
+
                       <p className="text-gray-500 text-xs uppercase tracking-widest font-light mb-3">
                         {item.category}
                       </p>
@@ -238,20 +247,21 @@ const WishlistPage = () => {
                         disabled={!item.isInStock}
                         className={`w-full py-3 text-xs tracking-widest uppercase font-light border transition duration-300 mb-2 ${
                           !item.isInStock
-                            ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                            : 'bg-black text-white border-black hover:bg-gray-800'
+                            ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
+                            : "bg-black text-white border-black hover:bg-gray-800"
                         }`}
                       >
-                        {!item.isInStock ? 'Out of Stock' : 'Move to Cart'}
+                        {!item.isInStock ? "Out of Stock" : "Move to Cart"}
                       </button>
 
                       {/* Added Date */}
                       {item.addedAt && (
                         <p className="text-xs text-gray-400 font-light">
-                          Added {new Date(item.addedAt).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric',
-                            year: 'numeric'
+                          Added{" "}
+                          {new Date(item.addedAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
                           })}
                         </p>
                       )}
@@ -269,20 +279,28 @@ const WishlistPage = () => {
                   <h3 className="text-lg font-light tracking-widest uppercase mb-4">
                     Wishlist Summary
                   </h3>
-                  
+
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="font-light text-gray-600">Total Items</span>
+                      <span className="font-light text-gray-600">
+                        Total Items
+                      </span>
                       <span className="font-light">{wishlistItems.length}</span>
                     </div>
-                    
+
                     <div className="flex justify-between">
-                      <span className="font-light text-gray-600">Available</span>
-                      <span className="font-light text-green-600">{getInStockCount()}</span>
+                      <span className="font-light text-gray-600">
+                        Available
+                      </span>
+                      <span className="font-light text-green-600">
+                        {getInStockCount()}
+                      </span>
                     </div>
-                    
+
                     <div className="flex justify-between">
-                      <span className="font-light text-gray-600">Out of Stock</span>
+                      <span className="font-light text-gray-600">
+                        Out of Stock
+                      </span>
                       <span className="font-light text-red-600">
                         {wishlistItems.length - getInStockCount()}
                       </span>
@@ -306,7 +324,7 @@ const WishlistPage = () => {
                     >
                       Continue Shopping
                     </Link>
-                    
+
                     {getInStockCount() > 0 && (
                       <button
                         onClick={handleMoveAllToCart}
@@ -325,25 +343,55 @@ const WishlistPage = () => {
                   </h3>
                   <ul className="space-y-2 text-sm text-gray-600">
                     <li className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                       <span>Save items you love</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                       <span>Get notified when items go on sale</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                       <span>Quickly move items to cart</span>
                     </li>
                   </ul>
-                </div>               
+                </div>
               </div>
             </div>
           </div>
@@ -351,8 +399,18 @@ const WishlistPage = () => {
           /* Empty Wishlist State */
           <div className="text-center py-16">
             <div className="max-w-md mx-auto">
-              <svg className="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              <svg
+                className="w-24 h-24 text-gray-300 mx-auto mb-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
               </svg>
               <h2 className="text-2xl font-light tracking-wide text-gray-600 mb-4">
                 Your Wishlist is Empty

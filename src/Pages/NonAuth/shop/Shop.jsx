@@ -9,12 +9,13 @@ const ShopPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const location = useLocation(); // ✅ to read URL query params
+  const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const genderFilter = searchParams.get("gender"); // e.g. men, women, kids
+  const genderFilter = searchParams.get("gender");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,8 +49,24 @@ const ShopPage = () => {
     fetchData();
   }, []);
 
+  // Search functionality
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
+
   useEffect(() => {
     let filtered = [...products];
+
+    // ✅ Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query) ||
+        product.gender.toLowerCase().includes(query)
+      );
+    }
 
     // ✅ Filter by gender from Navbar
     if (genderFilter) {
@@ -84,7 +101,11 @@ const ShopPage = () => {
     }
 
     setFilteredProducts(filtered);
-  }, [selectedCategory, sortBy, products, genderFilter]);
+  }, [selectedCategory, sortBy, products, genderFilter, searchQuery]);
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
 
   if (loading) {
     return (
@@ -112,6 +133,63 @@ const ShopPage = () => {
           <p className="text-gray-600 text-sm uppercase tracking-widest font-light">
             Curated Luxury Footwear
           </p>
+        </div>
+      </section>
+
+      {/* Search Bar */}
+      <section className="border-b border-gray-200 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search products by name, description, category..."
+                className="block w-full pl-10 pr-12 py-4 border border-gray-300 rounded-none text-sm font-light tracking-wide focus:outline-none focus:border-black transition duration-300 bg-white"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <svg className="h-5 w-5 text-gray-400 hover:text-gray-600 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            
+            {/* Search Results Info */}
+            {searchQuery && (
+              <div className="mt-4 text-center">
+                <p className="text-sm font-light text-gray-600">
+                  {filteredProducts.length > 0 ? (
+                    <>
+                      Found <span className="font-medium">{filteredProducts.length}</span> product{filteredProducts.length !== 1 ? 's' : ''} for "<span className="font-medium">{searchQuery}</span>"
+                    </>
+                  ) : (
+                    <>
+                      No products found for "<span className="font-medium">{searchQuery}</span>"
+                    </>
+                  )}
+                </p>
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="mt-2 text-xs font-light tracking-widest uppercase text-gray-500 hover:text-black transition duration-300 border-b border-transparent hover:border-black"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -149,9 +227,48 @@ const ShopPage = () => {
       {/* Filters & Sort */}
       <section className="border-b border-gray-200 sticky top-20 bg-white z-40">
         <div className="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row justify-between items-start lg:items-center py-6">
-          <p className="text-sm font-light tracking-widest uppercase text-gray-500 mb-4 lg:mb-0">
-            {filteredProducts.length} PRODUCTS
-          </p>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 mb-4 lg:mb-0">
+            <p className="text-sm font-light tracking-widest uppercase text-gray-500">
+              {filteredProducts.length} PRODUCTS
+            </p>
+            
+            {/* Active Filters */}
+            {(searchQuery || selectedCategory !== "all" || genderFilter) && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 font-light">Active filters:</span>
+                <div className="flex flex-wrap gap-2">
+                  {searchQuery && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-light bg-gray-100 text-gray-700">
+                      Search: "{searchQuery}"
+                      <button
+                        onClick={clearSearch}
+                        className="ml-1 text-gray-500 hover:text-gray-700"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  {selectedCategory !== "all" && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-light bg-gray-100 text-gray-700">
+                      Category: {categories.find(c => c.id === selectedCategory)?.name}
+                      <button
+                        onClick={() => setSelectedCategory("all")}
+                        className="ml-1 text-gray-500 hover:text-gray-700"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  {genderFilter && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-light bg-gray-100 text-gray-700">
+                      Gender: {genderFilter}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
           <div className="flex items-center space-x-6">
             <div className="relative">
               <select
@@ -194,15 +311,33 @@ const ShopPage = () => {
           </div>
         ) : (
           <div className="text-center py-16">
-            <p className="text-lg font-light tracking-wide text-gray-600 mb-4">
-              No products found in this category
-            </p>
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className="border border-black text-black px-6 py-2 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
-            >
-              View All Collections
-            </button>
+            <div className="max-w-md mx-auto">
+              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <p className="text-lg font-light tracking-wide text-gray-600 mb-4">
+                {searchQuery ? "No products found matching your search" : "No products found in this category"}
+              </p>
+              <div className="space-x-4">
+                <button
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    setSearchQuery("");
+                  }}
+                  className="border border-black text-black px-6 py-2 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
+                >
+                  View All Collections
+                </button>
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="border border-gray-300 text-gray-600 px-6 py-2 text-sm font-light tracking-widest uppercase hover:border-black hover:text-black transition duration-300"
+                  >
+                    Clear Search
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </section>
