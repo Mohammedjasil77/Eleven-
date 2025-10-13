@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import ProtectedRoute from "./Context/ProtectedRoute";
 import AdminRoute from "./Pages/Auth/AdminRoute";
 import { Routes, Route } from "react-router-dom";
@@ -20,23 +21,48 @@ import BuyNowPage from "./Pages/NonAuth/BuyNow";
 import "react-toastify/dist/ReactToastify.css";
 import TrackOrder from "./Pages/NonAuth/TrackOrder";
 import Contact from "./Pages/NonAuth/Contact";
+import OrderTrackingDetail from "./Pages/NonAuth/OrderTrackingDetail";
 
 // Admin side //
-
 import AdminDashboard from "./Components/Admin/pages/Admin Pages/AdminDashbord";
+import UserManagement from "./Components/Admin/pages/Admin Pages/Users/UserManagment";
+import ProductManagement from "./Components/Admin/pages/Admin Pages/Products/ProductsManagment";
+import AddProduct from "./Components/Admin/pages/Admin Pages/Products/AddProducts";
+import EditProduct from "./Components/Admin/pages/Admin Pages/Products/EditProducts";
+import OrderManagement from "./Components/Admin/pages/Admin Pages/Order/OrderManagment";
+
+
+// Layout component to handle conditional rendering
+const AppLayout = ({ children }) => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  return (
+    <>
+      {/* Only show Navbar for non-admin routes */}
+      {!isAdminRoute && <Navbar />}
+      
+      <main className="min-h-screen">
+        {children}
+      </main>
+
+      {/* Only show Footer for non-admin routes */}
+      {!isAdminRoute && <Footer />}
+    </>
+  );
+};
 
 function App() {
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen">
+      <AppLayout>
         <Routes>
+          {/* User Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/new-arrivals" element={<NewArrivals />} />
-          {/* Fixed ProductDetails route to use parameter */}
           <Route path="/product/:productId" element={<ProductDetails />} />
           <Route path="/cart" element={<CartPage />} />
           <Route
@@ -58,29 +84,71 @@ function App() {
             }
           />
           <Route path="/track-order" element={<TrackOrder />} />
+          <Route path="/track-order/:orderId" element={<OrderTrackingDetail/>}/>
           <Route path="/contact" element={<Contact />} />
 
-          {/* admin route*/}
-
-          <Route path="/admin" 
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          } />
-
-          <Route path="/admin-dashbord" 
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          } />
+          {/* Admin Routes */}
+          <Route 
+            path="/admin" 
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin-dashbord" 
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              <AdminRoute>
+                <UserManagement />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin/products" 
+            element={
+              <AdminRoute>
+                <ProductManagement />
+              </AdminRoute>
+            }
+          />
+          <Route 
+            path="/admin/products/add"
+            element={
+              <AdminRoute>
+                <AddProduct />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin/products/edit/:productId" 
+            element={
+              <AdminRoute>
+                <EditProduct />
+              </AdminRoute>
+            }
+          />
+          <Route 
+            path="/admin/orders"
+            element={
+              <AdminRoute>
+                <OrderManagement />
+              </AdminRoute>
+            } 
+          />
 
           {/* 404 route should be last */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </main>
-      <Footer />
+      </AppLayout>
 
       {/* Toast Container for notifications */}
       <ToastContainer

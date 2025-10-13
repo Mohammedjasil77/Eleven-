@@ -1,62 +1,50 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext";
-
+import api from "../../../Api/Apipage";
 const TrackOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useContext(AuthContext);
-
-  // Mock user orders - In real app, this would come from your backend
-  const mockUserOrders = [
-   
-    {
-      id: "1759915870249",
-      status: "shipped",
-      date: "2025-01-05T10:30:00Z",
-      items: [
-        {
-          id: 3,
-          name: "Classic Leather Sneakers",
-          size: "9",
-          quantity: 1,
-          price: 12999,
-          image: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=150"
-        }
-      ],
-      subtotal: 12999,
-      shipping: 0,
-      tax: 2340,
-      total: 15339
-    }
-  ];
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserOrders = async () => {
-      setLoading(true);
-      try {
-        // Simulate API call to get user's orders
-        await new Promise(resolve => setTimeout(resolve, 1000));
+  const fetchUserOrders = async () => {
+    setLoading(true);
+    try {
+      if (user) {
+        console.log('🔄 Fetching orders for user:', user.id);
         
-        // In real app: const orders = await api.get(`/users/${user.id}/orders`);
-        setOrders(mockUserOrders);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      } finally {
-        setLoading(false);
+        // Get user data to access their orders
+        const userResponse = await api.get(`/users/${user.id}`);
+        const userData = userResponse.data;
+        
+        console.log('📦 User data from API:', userData);
+        console.log('📋 Orders found:', userData.orders);
+        
+        // User orders are stored in the user object itself
+        const userOrders = userData.orders || [];
+        console.log('✅ Final orders to display:', userOrders);
+        
+        setOrders(userOrders);
       }
-    };
-
-    if (user) {
-      fetchUserOrders();
+    } catch (error) {
+      console.error("❌ Error fetching orders:", error);
+      setOrders([]);
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
+
+  fetchUserOrders();
+}, [user]);
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
-    }).format(price / 100);
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(price);
   };
 
   const formatDate = (dateString) => {
@@ -72,7 +60,8 @@ const TrackOrder = () => {
   const getStatusColor = (status) => {
     const colors = {
       processing: "bg-yellow-500",
-      shipped: "bg-blue-500",
+      confirmed: "bg-blue-500",
+      shipped: "bg-purple-500",
       delivered: "bg-green-500",
       cancelled: "bg-red-500"
     };
@@ -82,11 +71,39 @@ const TrackOrder = () => {
   const getStatusText = (status) => {
     const texts = {
       processing: "Processing",
+      confirmed: "Confirmed",
       shipped: "Shipped",
       delivered: "Delivered",
       cancelled: "Cancelled"
     };
     return texts[status] || status;
+  };
+
+  const handleReorder = async (order) => {
+    try {
+      // Add all items from the order to cart
+      const cartPromises = order.items.map(item =>
+        api.patch(`/users/${user.id}`, {
+          cart: [...(user.cart || []), {
+            id: Date.now().toString(),
+            productId: item.productId,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity
+          }]
+        })
+      );
+      
+      await Promise.all(cartPromises);
+      navigate('/buy-now');
+    } catch (error) {
+      console.error("Error reordering:", error);
+      alert("Error adding items to cart");
+    }
+  };
+
+  const handleTrackOrder = (orderId) => {
+    navigate(`/track-order/${orderId}`);
   };
 
   if (loading) {
@@ -117,7 +134,26 @@ const TrackOrder = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {orders.length === 0 ? (
+        {!user ? (
+          // Not logged in state
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <h3 className="text-xl font-medium text-gray-900 mb-2">Please Login</h3>
+              <p className="text-gray-600 mb-6">
+                Please login to view your order history.
+              </p>
+              <Link
+                to="/login"
+                className="inline-block bg-black text-white px-6 py-3 text-sm font-light tracking-widest uppercase hover:bg-gray-800 transition duration-300"
+              >
+                Login
+              </Link>
+            </div>
+          </div>
+        ) : orders.length === 0 ? (
           // No Orders State
           <div className="text-center py-12">
             <div className="max-w-md mx-auto">
@@ -176,7 +212,7 @@ const TrackOrder = () => {
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900">{item.name}</h4>
                           <p className="text-sm text-gray-500">
-                            Size: {item.size} | Qty: {item.quantity}
+                            Size: {item.size} | Color: {item.color} | Qty: {item.quantity}
                           </p>
                           <p className="text-sm text-gray-500 mt-1">
                             {formatPrice(item.price)} each
@@ -191,8 +227,22 @@ const TrackOrder = () => {
                     ))}
                   </div>
 
-                
-                  
+                  {/* Order Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() => handleReorder(order)}
+                      className="flex-1 bg-black text-white py-2 px-4 text-sm font-light tracking-widest uppercase hover:bg-gray-800 transition duration-300"
+                    >
+                      Buy Again
+                    </button>
+                    <button
+                      onClick={() => handleTrackOrder(order.id)}
+                      className="flex-1 border border-black text-black py-2 px-4 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
+                    >
+                      Track Order
+                    </button>
+                    
+                  </div>
                 </div>
               </div>
             ))}

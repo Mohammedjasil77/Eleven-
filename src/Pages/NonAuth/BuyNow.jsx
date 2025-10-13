@@ -1,17 +1,20 @@
-// BuyNowPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useCart } from "../../Context/CartContext";
 import { AuthContext } from "../../Context/AuthContext";
+import api from "../../../Api/Apipage";
 
 const BuyNowPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { user } = React.useContext(AuthContext);
+  const { clearCart } = useCart();
+  const { user } = useContext(AuthContext);
 
-  // Get product from location state or redirect
+  // State for both single product and cart items
   const [product, setProduct] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
+  const [isCartCheckout, setIsCartCheckout] = useState(false);
+  
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -64,13 +67,19 @@ const BuyNowPage = () => {
   ];
 
   useEffect(() => {
-    // Get product from location state
-    if (location.state?.product) {
+    // Check if we're coming from cart or single product
+    if (location.state?.cartItems && location.state.cartItems.length > 0) {
+      // Cart checkout
+      setCartItems(location.state.cartItems);
+      setIsCartCheckout(true);
+    } else if (location.state?.product) {
+      // Single product checkout
       setProduct(location.state.product);
       setSelectedSize(location.state.product.sizes?.[0] || "");
       setSelectedColor(location.state.product.colors?.[0] || "");
+      setIsCartCheckout(false);
     } else {
-      // Redirect if no product data
+      // Redirect if no valid data
       navigate("/shop");
     }
 
@@ -152,8 +161,13 @@ const BuyNowPage = () => {
     }
   };
 
+  // Calculate totals based on cart items or single product
   const calculateSubtotal = () => {
-    return product ? (product.price * quantity) : 0;
+    if (isCartCheckout) {
+      return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    } else {
+      return product ? (product.price * quantity) : 0;
+    }
   };
 
   const calculateShipping = () => {
@@ -181,14 +195,17 @@ const BuyNowPage = () => {
       }
     }
 
-    if (!selectedSize) {
-      alert("Please select a size");
-      return false;
-    }
+    // Only validate size/color for single product checkout
+    if (!isCartCheckout) {
+      if (!selectedSize) {
+        alert("Please select a size");
+        return false;
+      }
 
-    if (!selectedColor) {
-      alert("Please select a color");
-      return false;
+      if (!selectedColor) {
+        alert("Please select a color");
+        return false;
+      }
     }
 
     if (!paymentInfo.cardNumber.replace(/\s/g, '').match(/^\d{16}$/)) {
@@ -222,18 +239,32 @@ const BuyNowPage = () => {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const orderItems = isCartCheckout 
+        ? cartItems.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+            image: item.image
+          }))
+        : [{
+            id: product.id,
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: quantity,
+            size: selectedSize,
+            color: selectedColor,
+            image: product.images?.[0] || "/placeholder-image.jpg"
+          }];
 
-      const order = {
+      const orderData = {
         id: `ORD${Date.now()}`,
         date: new Date().toISOString(),
-        items: [{
-          ...product,
-          size: selectedSize,
-          color: selectedColor,
-          quantity: quantity
-        }],
+        items: orderItems,
         shippingInfo,
         paymentInfo: {
           ...paymentInfo,
@@ -247,8 +278,43 @@ const BuyNowPage = () => {
         status: 'confirmed'
       };
 
-      // In a real app, you would send this to your backend
-      console.log('Direct order placed:', order);
+      console.log('Order Data:', orderData);
+      console.log('Current User:', user);
+
+      // ✅ CRITICAL: Save order to database
+      if (user) {
+        try {
+          // 1. Get current user data
+          const userResponse = await api.get(`/users/${user.id}`);
+          const currentUser = userResponse.data;
+          console.log('Current User Data:', currentUser);
+
+          // 2. Create updated user with new order
+          const updatedUser = {
+            ...currentUser,
+            orders: [...(currentUser.orders || []), orderData],
+            // Clear cart if it was a cart checkout
+            cart: isCartCheckout ? [] : currentUser.cart
+          };
+
+          // 3. Save updated user to database
+          await api.put(`/users/${user.id}`, updatedUser);
+          console.log('✅ Order saved to user profile successfully');
+
+        } catch (error) {
+          console.error('❌ Error saving order to user profile:', error);
+          alert("Failed to save order. Please try again.");
+          return;
+        }
+      } else {
+        alert("User not logged in. Please login to complete your order.");
+        return;
+      }
+
+      // Clear cart from context if this was a cart checkout
+      if (isCartCheckout) {
+        clearCart();
+      }
 
       setOrderSuccess(true);
 
@@ -260,12 +326,12 @@ const BuyNowPage = () => {
     }
   };
 
-  if (!product) {
+  if (!product && !isCartCheckout) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-          <p className="text-sm font-light">Loading product...</p>
+          <p className="text-sm font-light">Loading...</p>
         </div>
       </div>
     );
@@ -293,12 +359,12 @@ const BuyNowPage = () => {
               >
                 Continue Shopping
               </Link>
-              <button
-                onClick={() => window.print()}
+              <Link
+                to="/track-order"
                 className="border border-black text-black px-8 py-3 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
               >
-                Print Receipt
-              </button>
+                View Your Orders
+              </Link>
             </div>
           </div>
         </div>
@@ -312,122 +378,154 @@ const BuyNowPage = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column - Product & Forms */}
           <div className="lg:w-2/3">
-            {/* Product Summary */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
-              <div className="flex flex-col md:flex-row gap-8">
-                {/* Product Images */}
-                <div className="md:w-1/3">
-                  <div className="aspect-square overflow-hidden mb-4">
-                    <img
-                      src={product.images?.[activeImage] || "/placeholder-image.jpg"}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  {product.images && product.images.length > 1 && (
-                    <div className="flex gap-2">
-                      {product.images.map((image, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setActiveImage(index)}
-                          className={`w-12 h-12 border-2 ${
-                            activeImage === index ? "border-black" : "border-transparent"
-                          }`}
-                        >
-                          <img
-                            src={image}
-                            alt={`${product.name} view ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
+            {/* Product Summary - Only show for single product */}
+            {!isCartCheckout && product && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Product Images */}
+                  <div className="md:w-1/3">
+                    <div className="aspect-square overflow-hidden mb-4">
+                      <img
+                        src={product.images?.[activeImage] || "/placeholder-image.jpg"}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  )}
-                </div>
-
-                {/* Product Details */}
-                <div className="md:w-2/3">
-                  <h1 className="text-2xl font-serif font-light mb-4">{product.name}</h1>
-                  <div className="flex items-center gap-3 mb-4">
-                    <p className="text-xl font-light">{formatPrice(product.price)}</p>
-                    {product.originalPrice > product.price && (
-                      <p className="text-gray-400 text-lg font-light line-through">
-                        {formatPrice(product.originalPrice)}
-                      </p>
+                    {product.images && product.images.length > 1 && (
+                      <div className="flex gap-2">
+                        {product.images.map((image, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setActiveImage(index)}
+                            className={`w-12 h-12 border-2 ${
+                              activeImage === index ? "border-black" : "border-transparent"
+                            }`}
+                          >
+                            <img
+                              src={image}
+                              alt={`${product.name} view ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  
-                  <p className="text-gray-600 mb-6">{product.description}</p>
 
-                  {/* Size Selection */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Size *</label>
-                    <div className="flex flex-wrap gap-2">
-                      {product.sizes?.map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setSelectedSize(size)}
-                          className={`px-4 py-2 border text-sm transition duration-300 ${
-                            selectedSize === size
-                              ? "border-black bg-black text-white"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
+                  {/* Product Details */}
+                  <div className="md:w-2/3">
+                    <h1 className="text-2xl font-serif font-light mb-4">{product.name}</h1>
+                    <div className="flex items-center gap-3 mb-4">
+                      <p className="text-xl font-light">{formatPrice(product.price)}</p>
+                      {product.originalPrice > product.price && (
+                        <p className="text-gray-400 text-lg font-light line-through">
+                          {formatPrice(product.originalPrice)}
+                        </p>
+                      )}
                     </div>
-                  </div>
+                    
+                    <p className="text-gray-600 mb-6">{product.description}</p>
 
-                  {/* Color Selection */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Color *</label>
-                    <div className="flex flex-wrap gap-2">
-                      {product.colors?.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => setSelectedColor(color)}
-                          className={`px-4 py-2 border text-sm capitalize transition duration-300 ${
-                            selectedColor === color
-                              ? "border-black bg-black text-white"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                        >
-                          {color}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Quantity Selection */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Quantity</label>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center border border-gray-300">
-                        <button
-                          onClick={() => handleQuantityChange(-1)}
-                          disabled={quantity <= 1}
-                          className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          -
-                        </button>
-                        <span className="px-4 py-2 min-w-12 text-center">{quantity}</span>
-                        <button
-                          onClick={() => handleQuantityChange(1)}
-                          disabled={quantity >= product.count}
-                          className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          +
-                        </button>
+                    {/* Size Selection */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Size *</label>
+                      <div className="flex flex-wrap gap-2">
+                        {product.sizes?.map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-4 py-2 border text-sm transition duration-300 ${
+                              selectedSize === size
+                                ? "border-black bg-black text-white"
+                                : "border-gray-300 hover:border-gray-400"
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
                       </div>
-                      <span className="text-sm text-gray-500">
-                        {product.count} available
-                      </span>
+                    </div>
+
+                    {/* Color Selection */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Color *</label>
+                      <div className="flex flex-wrap gap-2">
+                        {product.colors?.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => setSelectedColor(color)}
+                            className={`px-4 py-2 border text-sm capitalize transition duration-300 ${
+                              selectedColor === color
+                                ? "border-black bg-black text-white"
+                                : "border-gray-300 hover:border-gray-400"
+                            }`}
+                          >
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quantity Selection */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Quantity</label>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center border border-gray-300">
+                          <button
+                            onClick={() => handleQuantityChange(-1)}
+                            disabled={quantity <= 1}
+                            className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            -
+                          </button>
+                          <span className="px-4 py-2 min-w-12 text-center">{quantity}</span>
+                          <button
+                            onClick={() => handleQuantityChange(1)}
+                            disabled={quantity >= product.count}
+                            className="px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          {product.count} available
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Cart Summary - Only show for cart checkout */}
+            {isCartCheckout && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+                <h2 className="text-2xl font-serif font-light mb-6">Cart Summary</h2>
+                <div className="space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4 py-4 border-b border-gray-100">
+                      <div className="w-20 h-24 bg-gray-100 flex-shrink-0">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-light">{item.name}</h3>
+                        <p className="text-sm text-gray-600">
+                          Size: {item.size} | Color: {item.color}
+                        </p>
+                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-light">{formatPrice(item.price * item.quantity)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Shipping Information */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
@@ -566,11 +664,7 @@ const BuyNowPage = () => {
                       </div>
                     </div>
                     <div className="font-medium">
-                      {method.price === 0 ? 'FREE' : new Intl.NumberFormat('en-IN', {
-                        style: 'currency',
-                        currency: 'INR',
-                        maximumFractionDigits: 0
-                      }).format(method.price)}
+                      {method.price === 0 ? 'FREE' : formatPrice(method.price)}
                     </div>
                   </label>
                 ))}
@@ -657,29 +751,59 @@ const BuyNowPage = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 sticky top-32">
               <h2 className="text-2xl font-serif font-light mb-6">Order Summary</h2>
               
-              {/* Product Item */}
-              <div className="flex items-center space-x-4 py-4 border-b border-gray-100 mb-6">
-                <div className="w-16 h-20 bg-gray-100 flex-shrink-0">
-                  <img
-                    src={product.images?.[0] || "/placeholder-image.jpg"}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-light truncate">{product.name}</h3>
-                  <p className="text-xs text-gray-500">
-                    Size: {selectedSize || "Not selected"} | Color: {selectedColor || "Not selected"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">Quantity: {quantity}</p>
-                </div>
-                
-                <div className="text-right">
-                  <p className="text-sm font-light">
-                    {formatPrice(product.price * quantity)}
-                  </p>
-                </div>
+              {/* Product Items */}
+              <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
+                {isCartCheckout ? (
+                  // Cart items
+                  cartItems.map((item) => (
+                    <div key={item.id} className="flex items-center space-x-4 py-4 border-b border-gray-100">
+                      <div className="w-16 h-20 bg-gray-100 flex-shrink-0">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-light truncate">{item.name}</h3>
+                        <p className="text-xs text-gray-500">
+                          Size: {item.size} | Color: {item.color}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Quantity: {item.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-light">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Single product
+                  product && (
+                    <div className="flex items-center space-x-4 py-4 border-b border-gray-100">
+                      <div className="w-16 h-20 bg-gray-100 flex-shrink-0">
+                        <img
+                          src={product.images?.[0] || "/placeholder-image.jpg"}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-light truncate">{product.name}</h3>
+                        <p className="text-xs text-gray-500">
+                          Size: {selectedSize || "Not selected"} | Color: {selectedColor || "Not selected"}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Quantity: {quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-light">
+                          {formatPrice(product.price * quantity)}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                )}
               </div>
 
               {/* Order Totals */}
@@ -710,11 +834,11 @@ const BuyNowPage = () => {
               {/* Place Order Button */}
               <button
                 onClick={handlePlaceOrder}
-                disabled={loading || !selectedSize || !selectedColor}
+                disabled={loading || (!isCartCheckout && (!selectedSize || !selectedColor))}
                 className={`w-full py-4 text-sm font-light tracking-widest uppercase mt-6 transition duration-300 ${
-                  loading || !selectedSize || !selectedColor
+                  loading || (!isCartCheckout && (!selectedSize || !selectedColor))
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-black text-white hover:bg-gray-800'
                 }`}
               >
                 {loading ? (
@@ -723,7 +847,7 @@ const BuyNowPage = () => {
                     Processing...
                   </div>
                 ) : (
-                  `Buy Now • ${formatPrice(calculateTotal())}`
+                  `Place Order • ${formatPrice(calculateTotal())}`
                 )}
               </button>
 

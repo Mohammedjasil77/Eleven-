@@ -1,4 +1,4 @@
-
+// src/Pages/Auth/AdminRoute.js
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
@@ -24,10 +24,9 @@ const AdminRoute = ({ children }) => {
   // If user is not admin
   if (user.role !== 'admin') {
     return <Navigate to="/unauthorized" replace />;
-    // Or redirect to home: return <Navigate to="/" replace />;
   }
 
-  // If user is admin, render with admin layout
+  // Return with AdminLayout wrapper
   return <AdminLayout>{children}</AdminLayout>;
 };
 

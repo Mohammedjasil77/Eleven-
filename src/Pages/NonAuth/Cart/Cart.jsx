@@ -23,14 +23,15 @@ const CartPage = () => {
       maximumFractionDigits: 0,
     }).format(price);
 
-  const handleCheckout = () => {
-    if (!user) {
-      alert("Please login to proceed to checkout");
-      navigate("/login");
-      return;
-    }
-    navigate("/buy-now");
-  };
+const handleCheckout = () => {
+  if (!user) {
+    alert("Please login to proceed to checkout");
+    navigate("/login");
+    return;
+  }
+
+  navigate("/buy-now", { state: { cartItems } });
+};
 
   if (loading) {
     return (
