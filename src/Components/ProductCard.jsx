@@ -20,12 +20,12 @@ const ProductCard = ({ product }) => {
       maximumFractionDigits: 0,
     }).format(price);
 
-  const handleAddToCart = async (e, size = "M") => {
+  const handleProductAction = async (e, actionType) => {
     e.preventDefault();
     e.stopPropagation();
 
     // Check if size is required but not selected
-    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+    if (product.sizes?.length > 0 && !selectedSize) {
       toast.warning("📏 Please select a size first!", {
         position: "bottom-right",
         autoClose: 3000,
@@ -35,133 +35,51 @@ const ProductCard = ({ product }) => {
     }
 
     const sizeToUse = selectedSize || "M";
-    const result = await addToCart(product.id, sizeToUse, "Default", 1);
 
-    if (result.success) {
-      toast.success("🛒 Product added to cart successfully!", {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
-    } else {
-      toast.error(`❌ ${result.message || "Failed to add product to cart"}`, {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
-    }
-  };
-
-  const handleBuyNow = async (e, size = "M") => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Check if size is required but not selected
-    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-      toast.warning("📏 Please select a size first!", {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
-      setShowSizeModal(true);
-      return;
-    }
-
-    // Navigate to BuyNow page with product data
-    navigate("/buy-now", {
-      state: {
-        product: {
-          ...product,
-          selectedSize: size || selectedSize,
+    if (actionType === "cart") {
+      const result = await addToCart(product.id, sizeToUse, "Default", 1);
+      if (result.success) {
+        toast.success("🛒 Product added to cart successfully!");
+      } else {
+        toast.error(`❌ ${result.message || "Failed to add product to cart"}`);
+      }
+    } else if (actionType === "buy") {
+      navigate("/buy-now", {
+        state: {
+          product: {
+            ...product,
+            selectedSize: sizeToUse,
+          },
         },
-      },
-    });
-
-    toast.info("🚀 Proceeding to checkout...", {
-      position: "bottom-right",
-      autoClose: 2000,
-    });
+      });
+      toast.info("🚀 Proceeding to checkout...");
+    }
   };
 
-  const handleSizeSelect = (e, size) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setSelectedSize(size);
-    setShowSizeModal(false);
-
-    toast.success(`✅ Size ${size} selected!`, {
-      position: "bottom-right",
-      autoClose: 2000,
-    });
-  };
-
-  const handleWishlistToggle = async (e, product) => {
+  const handleWishlistToggle = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     const result = await toggleWishlist(product);
-    console.log("Wishlist toggle result:", result); // Debug log
-
     if (result.success) {
-      // Check for result.action instead of result.isInWishlist
       if (result.action === "added") {
-        toast.success("💖 Added to wishlist!", {
-          position: "bottom-right",
-          autoClose: 2000,
-        });
-      } else if (result.action === "removed") {
-        toast.info("🗑️ Removed from wishlist", {
-          position: "bottom-right",
-          autoClose: 2000,
-        });
+        toast.success("💖 Added to wishlist!");
       } else {
-        // Fallback based on the current state
-        const isCurrentlyWishlisted = isInWishlist(product.id);
-        if (isCurrentlyWishlisted) {
-          toast.success("💖 Added to wishlist!", {
-            position: "bottom-right",
-            autoClose: 2000,
-          });
-        } else {
-          toast.info("🗑️ Removed from wishlist", {
-            position: "bottom-right",
-            autoClose: 2000,
-          });
-        }
+        toast.info("🗑️ Removed from wishlist");
       }
     } else {
-      toast.error(`❌ ${result.message || "Failed to update wishlist"}`, {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
+      toast.error(`❌ ${result.message || "Failed to update wishlist"}`);
     }
   };
 
-  const handleQuickView = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowQuickView(true);
-
-    toast.info("🔍 Opening quick view...", {
-      position: "bottom-right",
-      autoClose: 1500,
-    });
-  };
-
-  const handleSizeButtonClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setShowSizeModal(true);
-  };
-
-  const handleCloseSizeModal = () => {
+  const handleSizeSelect = (size) => {
+    setSelectedSize(size);
     setShowSizeModal(false);
-    if (selectedSize) {
-      toast.info(`📏 Size ${selectedSize} confirmed!`, {
-        position: "bottom-right",
-        autoClose: 2000,
-      });
-    }
+    toast.success(`✅ Size ${size} selected!`);
   };
 
   const isWishlisted = isInWishlist(product.id);
+  const isOutOfStock = product.count === 0;
 
   return (
     <>
@@ -196,15 +114,12 @@ const ProductCard = ({ product }) => {
 
           {/* Wishlist Button */}
           <button
-            onClick={(e) => handleWishlistToggle(e, product)}
+            onClick={handleWishlistToggle}
             className={`absolute top-4 right-4 z-20 p-2 rounded-full opacity-0 group-hover:opacity-100 transition duration-300 ${
               isWishlisted
                 ? "bg-red-50 text-red-500"
                 : "bg-white/90 backdrop-blur-sm hover:bg-white"
             }`}
-            aria-label={
-              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
-            }
           >
             <svg
               className={`w-4 h-4 transition duration-300 ${
@@ -224,7 +139,7 @@ const ProductCard = ({ product }) => {
           </button>
 
           {/* Out of Stock Overlay */}
-          {product.count === 0 && (
+          {isOutOfStock && (
             <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
               <span className="text-black text-sm tracking-widest uppercase font-light">
                 Out of Stock
@@ -232,38 +147,18 @@ const ProductCard = ({ product }) => {
             </div>
           )}
 
-          {/* Quick Actions Overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300 flex items-end justify-between p-4">
-            <div className="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-500">
-              <button
-                onClick={handleQuickView}
-                className="bg-white text-black px-4 py-2 text-xs tracking-widest uppercase font-light hover:bg-gray-100 transition duration-300 inline-block"
-              >
-                Quick View
-              </button>
-            </div>
-            <div className="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-500 delay-100">
-              <button
-                onClick={handleSizeButtonClick}
-                disabled={product.count === 0}
-                className="bg-white text-black p-2 text-xs tracking-widest uppercase font-light hover:bg-gray-100 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Select size"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.5"
-                    d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                  />
-                </svg>
-              </button>
-            </div>
+          {/* Quick View Button */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition duration-300 flex items-end justify-start p-4">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowQuickView(true);
+              }}
+              className="transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition duration-500 bg-white text-black px-4 py-2 text-xs tracking-widest uppercase font-light hover:bg-gray-100"
+            >
+              Quick View
+            </button>
           </div>
         </div>
 
@@ -299,26 +194,18 @@ const ProductCard = ({ product }) => {
             </div>
           )}
 
-          {/* Available Sizes */}
-          <div className="flex justify-center gap-1 mb-4">
-            <span className="text-xs text-gray-500 font-light">
-              Sizes: {product.sizes?.slice(0, 3).join(", ")}
-              {product.sizes?.length > 3 && "..."}
-            </span>
-          </div>
-
           {/* Action Buttons */}
           <div className="flex gap-2 mb-3">
             {/* Size Button */}
             <button
-              onClick={handleSizeButtonClick}
-              disabled={product.count === 0}
+              onClick={() => setShowSizeModal(true)}
+              disabled={isOutOfStock}
               className={`flex-1 py-3 text-xs tracking-widest uppercase font-light border transition duration-300 ${
-                product.count === 0
+                isOutOfStock
                   ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
                   : selectedSize
                   ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
-                  : "bg-white text-black border-gray-300 hover:bg-black hover:text-white hover:border-black"
+                  : "bg-white text-black border-gray-300 hover:bg-black hover:text-white"
               }`}
             >
               {selectedSize ? `Size: ${selectedSize}` : "Select Size"}
@@ -326,13 +213,9 @@ const ProductCard = ({ product }) => {
 
             {/* Buy Now Button */}
             <button
-              onClick={(e) => handleBuyNow(e, selectedSize || "M")}
-              disabled={product.count === 0}
-              className={`flex-1 py-3 text-xs tracking-widest uppercase font-light border transition duration-300 ${
-                product.count === 0
-                  ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
-                  : "bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700"
-              }`}
+              onClick={(e) => handleProductAction(e, "buy")}
+              disabled={isOutOfStock}
+              className="flex-1 py-3 text-xs tracking-widest uppercase font-light border bg-red-600 text-white border-red-600 hover:bg-red-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 disabled:cursor-not-allowed transition duration-300"
             >
               Buy Now
             </button>
@@ -340,20 +223,20 @@ const ProductCard = ({ product }) => {
 
           {/* Add to Cart Button */}
           <button
-            onClick={(e) => handleAddToCart(e, selectedSize || "M")}
-            disabled={product.count === 0}
+            onClick={(e) => handleProductAction(e, "cart")}
+            disabled={isOutOfStock}
             className={`w-full py-3 text-xs tracking-widest uppercase font-light border transition duration-300 ${
-              product.count === 0
+              isOutOfStock
                 ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
-                : product.sizes && product.sizes.length > 0 && !selectedSize
+                : product.sizes?.length > 0 && !selectedSize
                 ? "bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600"
                 : "bg-black text-white border-black hover:bg-gray-800"
             }`}
           >
-            {product.count === 0
+            {isOutOfStock
               ? "Out of Stock"
-              : product.sizes && product.sizes.length > 0 && !selectedSize
-              ? "Select Size First"
+              : product.sizes?.length > 0 && !selectedSize
+              ? "Add to Cat"
               : "Add to Cart"}
           </button>
         </div>
@@ -395,7 +278,7 @@ const ProductCard = ({ product }) => {
               {product.sizes?.map((size) => (
                 <button
                   key={size}
-                  onClick={(e) => handleSizeSelect(e, size)}
+                  onClick={() => handleSizeSelect(size)}
                   className={`py-3 border text-sm transition duration-300 ${
                     selectedSize === size
                       ? "border-black bg-black text-white"
@@ -407,20 +290,12 @@ const ProductCard = ({ product }) => {
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowSizeModal(false)}
-                className="flex-1 py-3 border border-gray-300 text-sm font-light hover:border-black transition duration-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCloseSizeModal}
-                className="flex-1 py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition duration-300"
-              >
-                Confirm
-              </button>
-            </div>
+            <button
+              onClick={() => setShowSizeModal(false)}
+              className="w-full py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition duration-300"
+            >
+              Confirm Size
+            </button>
           </div>
         </div>
       )}

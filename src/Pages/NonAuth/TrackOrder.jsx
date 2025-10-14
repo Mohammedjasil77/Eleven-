@@ -2,42 +2,41 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext";
 import api from "../../../Api/Apipage";
+
 const TrackOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext); // Added updateUser if available
   const navigate = useNavigate();
 
   useEffect(() => {
-  const fetchUserOrders = async () => {
-    setLoading(true);
-    try {
-      if (user) {
-        console.log('🔄 Fetching orders for user:', user.id);
-        
-        // Get user data to access their orders
-        const userResponse = await api.get(`/users/${user.id}`);
-        const userData = userResponse.data;
-        
-        console.log('📦 User data from API:', userData);
-        console.log('📋 Orders found:', userData.orders);
-        
-        // User orders are stored in the user object itself
-        const userOrders = userData.orders || [];
-        console.log('✅ Final orders to display:', userOrders);
-        
-        setOrders(userOrders);
+    const fetchUserOrders = async () => {
+      setLoading(true);
+      try {
+        if (user) {
+          console.log('🔄 Fetching orders for user:', user.id);
+          
+          const userResponse = await api.get(`/users/${user.id}`);
+          const userData = userResponse.data;
+          
+          console.log('📦 User data from API:', userData);
+          console.log('📋 Orders found:', userData.orders);
+          
+          const userOrders = userData.orders || [];
+          console.log('✅ Final orders to display:', userOrders);
+          
+          setOrders(userOrders);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching orders:", error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("❌ Error fetching orders:", error);
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchUserOrders();
-}, [user]);
+    fetchUserOrders();
+  }, [user]);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-IN", {
@@ -80,25 +79,54 @@ const TrackOrder = () => {
   };
 
   const handleReorder = async (order) => {
+    if (!user || !user.id) {
+      navigate("/login");
+      return;
+    }
+
     try {
-      // Add all items from the order to cart
-      const cartPromises = order.items.map(item =>
-        api.patch(`/users/${user.id}`, {
-          cart: [...(user.cart || []), {
-            id: Date.now().toString(),
-            productId: item.productId,
-            size: item.size,
-            color: item.color,
-            quantity: item.quantity
-          }]
-        })
-      );
+      console.log('🔄 Starting reorder process for order:', order.id);
       
-      await Promise.all(cartPromises);
-      navigate('/buy-now');
+      // Get current user data to preserve existing cart items
+      const userResponse = await api.get(`/users/${user.id}`);
+      const currentUser = userResponse.data;
+      
+      // Create new cart items from the order
+      const newCartItems = order.items.map(item => ({
+        id: Date.now() + Math.random().toString(36).substr(2, 9), // More unique ID
+        productId: item.productId,
+        name: item.name, // Added name for better debugging
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
+        price: item.price, // Include price if needed
+        image: item.image // Include image if needed
+      }));
+
+      // Combine existing cart with new items
+      const updatedCart = [...(currentUser.cart || []), ...newCartItems];
+      
+      console.log('🛒 Updated cart:', updatedCart);
+      
+      // Update user's cart
+      const response = await api.patch(`/users/${user.id}`, {
+        cart: updatedCart
+      });
+      
+      console.log('✅ Cart updated successfully:', response.data);
+      
+      // If you have an updateUser function in AuthContext, call it to update the context
+      if (updateUser) {
+        updateUser(response.data);
+      }
+      
+      // Navigate to cart page instead of buy-now for better UX
+      navigate('/cart');
+      
     } catch (error) {
-      console.error("Error reordering:", error);
-      alert("Error adding items to cart");
+      console.error("❌ Error in reorder:", error);
+      console.error("Error details:", error.response?.data);
+      alert("Error adding items to cart. Please try again.");
     }
   };
 
@@ -241,7 +269,6 @@ const TrackOrder = () => {
                     >
                       Track Order
                     </button>
-                    
                   </div>
                 </div>
               </div>

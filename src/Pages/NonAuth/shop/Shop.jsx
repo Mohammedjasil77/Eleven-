@@ -7,21 +7,37 @@ const ShopPage = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [sortBy, setSortBy] = useState("featured");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(localStorage.getItem("all") || "");
+  const [sortBy, setSortBy] = useState(localStorage.getItem("featured") || "" );
+  const [searchQuery, setSearchQuery] = useState(localStorage.getItem("searchQuery") || "");
   const [loading, setLoading] = useState(true);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(4); 
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const genderFilter = searchParams.get("gender");
 
+
+  useEffect(()=> {
+    localStorage.setItem("searchQuery",searchQuery);
+  },[searchQuery])
+
+
+  useEffect(()=> {
+    localStorage.setItem("featured",sortBy)
+  },[sortBy])
+
+  useEffect (()=> {
+    localStorage.setItem("all",selectedCategory)
+  },[selectedCategory])
+
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
         const [productsResponse, categoriesResponse] = await Promise.all([
           api.get("/products"),
           api.get("/categories"),
@@ -29,7 +45,6 @@ const ShopPage = () => {
 
         setProducts(productsResponse.data || []);
         setCategories(categoriesResponse.data || []);
-        setFilteredProducts(productsResponse.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
         try {
@@ -37,7 +52,6 @@ const ShopPage = () => {
           const data = await response.json();
           setProducts(data.products || []);
           setCategories(data.categories || []);
-          setFilteredProducts(data.products || []);
         } catch (fallbackError) {
           console.error("Fallback fetch failed:", fallbackError);
         }
@@ -49,15 +63,11 @@ const ShopPage = () => {
     fetchData();
   }, []);
 
-  // Search functionality
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-  };
-
+  // Filter and sort products
   useEffect(() => {
     let filtered = [...products];
 
-    // ✅ Filter by search query
+    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(product =>
@@ -68,22 +78,21 @@ const ShopPage = () => {
       );
     }
 
-    // ✅ Filter by gender from Navbar
+    // Apply gender filter
     if (genderFilter) {
       filtered = filtered.filter(
-        (product) =>
-          product.gender?.toLowerCase() === genderFilter.toLowerCase()
+        product => product.gender?.toLowerCase() === genderFilter.toLowerCase()
       );
     }
 
-    // ✅ Filter by category
+    // Apply category filter
     if (selectedCategory !== "all") {
       filtered = filtered.filter(
-        (product) => product.category === selectedCategory
+        product => product.category === selectedCategory
       );
     }
 
-    // ✅ Sort products
+    // Apply sorting
     switch (sortBy) {
       case "price-low":
         filtered.sort((a, b) => a.price - b.price);
@@ -101,10 +110,86 @@ const ShopPage = () => {
     }
 
     setFilteredProducts(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [selectedCategory, sortBy, products, genderFilter, searchQuery]);
+
+  // Pagination logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // Next page
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      // Show all pages if total pages are less than maxPagesToShow
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Show limited pages with ellipsis
+      if (currentPage <= 3) {
+        // Near the start
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Near the end
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        // In the middle
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
+  };
+
+
+
+  const clearFilters = () => {
+    setSelectedCategory("all");
+    setSearchQuery("");
+    localStorage.removeItem("searchQuery")
+    setCurrentPage(1);
+  };
 
   const clearSearch = () => {
     setSearchQuery("");
+    localStorage.removeItem("searchQuery")
+    setCurrentPage(1);
   };
 
   if (loading) {
@@ -120,15 +205,18 @@ const ShopPage = () => {
     );
   }
 
+  const hasActiveFilters = searchQuery || selectedCategory !== "all" || genderFilter;
+  const pageTitle = genderFilter 
+    ? `${genderFilter.charAt(0).toUpperCase() + genderFilter.slice(1)}'s Collection`
+    : "THE COLLECTION";
+
   return (
     <div className="min-h-screen bg-white pt-20">
       {/* Hero Header */}
       <section className="border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
           <h1 className="text-4xl md:text-5xl font-serif font-light mb-4 tracking-wide">
-            {genderFilter
-              ? `${genderFilter.charAt(0).toUpperCase() + genderFilter.slice(1)}'s Collection`
-              : "THE COLLECTION"}
+            {pageTitle}
           </h1>
           <p className="text-gray-600 text-sm uppercase tracking-widest font-light">
             Curated Luxury Footwear
@@ -149,7 +237,7 @@ const ShopPage = () => {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products by name, description, category..."
                 className="block w-full pl-10 pr-12 py-4 border border-gray-300 rounded-none text-sm font-light tracking-wide focus:outline-none focus:border-black transition duration-300 bg-white"
               />
@@ -170,23 +258,17 @@ const ShopPage = () => {
               <div className="mt-4 text-center">
                 <p className="text-sm font-light text-gray-600">
                   {filteredProducts.length > 0 ? (
-                    <>
-                      Found <span className="font-medium">{filteredProducts.length}</span> product{filteredProducts.length !== 1 ? 's' : ''} for "<span className="font-medium">{searchQuery}</span>"
-                    </>
+                    <>Found <span className="font-medium">{filteredProducts.length}</span> product{filteredProducts.length !== 1 ? 's' : ''} for "<span className="font-medium">{searchQuery}</span>"</>
                   ) : (
-                    <>
-                      No products found for "<span className="font-medium">{searchQuery}</span>"
-                    </>
+                    <>No products found for "<span className="font-medium">{searchQuery}</span>"</>
                   )}
                 </p>
-                {searchQuery && (
-                  <button
-                    onClick={clearSearch}
-                    className="mt-2 text-xs font-light tracking-widest uppercase text-gray-500 hover:text-black transition duration-300 border-b border-transparent hover:border-black"
-                  >
-                    Clear search
-                  </button>
-                )}
+                <button
+                  onClick={clearSearch}
+                  className="mt-2 text-xs font-light tracking-widest uppercase text-gray-500 hover:text-black transition duration-300 border-b border-transparent hover:border-black"
+                >
+                  Clear search
+                </button>
               </div>
             )}
           </div>
@@ -198,7 +280,10 @@ const ShopPage = () => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex overflow-x-auto space-x-8 py-6 scrollbar-hide">
             <button
-              onClick={() => setSelectedCategory("all")}
+              onClick={() => {
+                setSelectedCategory("all");
+                setCurrentPage(1);
+              }}
               className={`flex-shrink-0 text-sm font-light tracking-widest uppercase transition duration-300 whitespace-nowrap pb-1 border-b-2 ${
                 selectedCategory === "all"
                   ? "text-black border-black"
@@ -210,7 +295,10 @@ const ShopPage = () => {
             {categories.map((category) => (
               <button
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => {
+                  setSelectedCategory(category.id);
+                  setCurrentPage(1);
+                }}
                 className={`flex-shrink-0 text-sm font-light tracking-widest uppercase transition duration-300 whitespace-nowrap pb-1 border-b-2 ${
                   selectedCategory === category.id
                     ? "text-black border-black"
@@ -229,34 +317,24 @@ const ShopPage = () => {
         <div className="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row justify-between items-start lg:items-center py-6">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 mb-4 lg:mb-0">
             <p className="text-sm font-light tracking-widest uppercase text-gray-500">
-              {filteredProducts.length} PRODUCTS
+              Showing {indexOfFirstProduct + 1}-{Math.min(indexOfLastProduct, filteredProducts.length)} of {filteredProducts.length} PRODUCTS
             </p>
             
             {/* Active Filters */}
-            {(searchQuery || selectedCategory !== "all" || genderFilter) && (
+            {hasActiveFilters && (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-500 font-light">Active filters:</span>
                 <div className="flex flex-wrap gap-2">
                   {searchQuery && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-light bg-gray-100 text-gray-700">
                       Search: "{searchQuery}"
-                      <button
-                        onClick={clearSearch}
-                        className="ml-1 text-gray-500 hover:text-gray-700"
-                      >
-                        ×
-                      </button>
+                      <button onClick={clearSearch} className="ml-1 text-gray-500 hover:text-gray-700">×</button>
                     </span>
                   )}
                   {selectedCategory !== "all" && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-light bg-gray-100 text-gray-700">
                       Category: {categories.find(c => c.id === selectedCategory)?.name}
-                      <button
-                        onClick={() => setSelectedCategory("all")}
-                        className="ml-1 text-gray-500 hover:text-gray-700"
-                      >
-                        ×
-                      </button>
+                      <button onClick={() => setSelectedCategory("all")} className="ml-1 text-gray-500 hover:text-gray-700">×</button>
                     </span>
                   )}
                   {genderFilter && (
@@ -269,11 +347,15 @@ const ShopPage = () => {
             )}
           </div>
           
+          {/* Sort Dropdown */}
           <div className="flex items-center space-x-6">
             <div className="relative">
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="appearance-none bg-transparent border border-gray-300 px-4 py-2 text-sm font-light tracking-widest uppercase focus:outline-none focus:border-black cursor-pointer pr-8"
               >
                 <option value="featured">FEATURED</option>
@@ -282,18 +364,8 @@ const ShopPage = () => {
                 <option value="price-high">PRICE: HIGH TO LOW</option>
               </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.5"
-                    d="M19 9l-7 7-7-7"
-                  />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </div>
@@ -302,13 +374,64 @@ const ShopPage = () => {
       </section>
 
       {/* Product Grid */}
-      <section className="max-w-7xl mx-auto px-6 py-16">
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+      <section className="max-w-7xl mx-auto px-6 py-8">
+        {currentProducts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-12">
+              {currentProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2">
+                {/* Previous Button */}
+                <button
+                  onClick={prevPage}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-2 text-sm font-light tracking-widest uppercase border transition duration-300 ${
+                    currentPage === 1
+                      ? "text-gray-400 border-gray-300 cursor-not-allowed"
+                      : "text-black border-black hover:bg-black hover:text-white"
+                  }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                {getPageNumbers().map((pageNumber, index) => (
+                  <button
+                    key={index}
+                    onClick={() => typeof pageNumber === 'number' ? paginate(pageNumber) : null}
+                    className={`px-3 py-2 text-sm font-light tracking-widest uppercase border transition duration-300 min-w-[40px] ${
+                      pageNumber === currentPage
+                        ? "bg-black text-white border-black"
+                        : pageNumber === '...'
+                        ? "text-gray-500 border-transparent cursor-default"
+                        : "text-black border-gray-300 hover:bg-black hover:text-white"
+                    }`}
+                    disabled={pageNumber === '...'}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
+
+                {/* Next Button */}
+                <button
+                  onClick={nextPage}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-2 text-sm font-light tracking-widest uppercase border transition duration-300 ${
+                    currentPage === totalPages
+                      ? "text-gray-400 border-gray-300 cursor-not-allowed"
+                      : "text-black border-black hover:bg-black hover:text-white"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-16">
             <div className="max-w-md mx-auto">
@@ -318,25 +441,12 @@ const ShopPage = () => {
               <p className="text-lg font-light tracking-wide text-gray-600 mb-4">
                 {searchQuery ? "No products found matching your search" : "No products found in this category"}
               </p>
-              <div className="space-x-4">
-                <button
-                  onClick={() => {
-                    setSelectedCategory("all");
-                    setSearchQuery("");
-                  }}
-                  className="border border-black text-black px-6 py-2 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
-                >
-                  View All Collections
-                </button>
-                {searchQuery && (
-                  <button
-                    onClick={clearSearch}
-                    className="border border-gray-300 text-gray-600 px-6 py-2 text-sm font-light tracking-widest uppercase hover:border-black hover:text-black transition duration-300"
-                  >
-                    Clear Search
-                  </button>
-                )}
-              </div>
+              <button
+                onClick={clearFilters}
+                className="border border-black text-black px-6 py-2 text-sm font-light tracking-widest uppercase hover:bg-black hover:text-white transition duration-300"
+              >
+                View All Collections
+              </button>
             </div>
           </div>
         )}

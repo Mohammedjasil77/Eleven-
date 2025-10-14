@@ -48,7 +48,7 @@ const AppLayout = ({ children }) => {
 
       {/* Only show Footer for non-admin routes */}
       {!isAdminRoute && <Footer />}
-    </>
+    </> 
   );
 };
 
