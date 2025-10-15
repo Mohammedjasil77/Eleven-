@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../../../../Api/Apipage"; // Your axios instance
-import AdminLayout from "../../Layout/AdminLayout";
+import api from "../../../../../Api/Apipage";
 import {
   BarChart,
   Bar,

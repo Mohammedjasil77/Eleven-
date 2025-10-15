@@ -1,57 +1,63 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 
-// 1. Create the context
 export const AuthContext = createContext();
 
-// 2. Create the provider
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // store logged-in user
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage when app loads
+  // ✅ Load user from localStorage on app load
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
         setUser(userData);
+
+        // ✅ Check if blocked
+        if (userData.isBlock) {
+          alert("⚠️ Your account has been blocked by admin.");
+          handleLogout();
+        }
       } catch (error) {
         console.error("Error parsing stored user data:", error);
-        localStorage.removeItem("user"); // Clear corrupted data
+        localStorage.removeItem("user");
       }
     }
-    setLoading(false); // Loading complete
+    setLoading(false);
   }, []);
 
-  // Login function
+  // ✅ Login function
   const login = (userData) => {
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
+
+    if (userData.isBlock) {
+      alert("⚠️ Your account has been blocked by admin.");
+      handleLogout();
+    }
   };
 
-  // Logout function
-  const logout = () => {
+  // ✅ Logout function - FIXED: No navigate, just state + storage cleanup
+  const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("cart");
+    localStorage.removeItem("wishlist");
     setUser(null);
+    
+    // Dispatch event to notify all components
+    window.dispatchEvent(new Event("authChange"));
   };
 
-  // Check if user is admin
-  const isAdmin = () => {
-    return user && user.role === "admin";
-  };
-
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    return user !== null;
-  };
+  // ✅ Check if user is authenticated (computed value)
+  const isAuthenticated = !!user && !user.isBlock;
 
   const value = {
     user,
     login,
-    logout,
-    loading, // Add loading to context value
-    isAdmin,
-    isAuthenticated
+    logout: handleLogout,
+    loading,
+    isAuthenticated,
   };
 
   return (

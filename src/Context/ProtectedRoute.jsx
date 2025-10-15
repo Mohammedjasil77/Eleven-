@@ -1,25 +1,34 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../Context/AuthContext";
+import { toast } from "react-toastify";
 
-const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { user, loading, logout } = useAuth();
 
-  // Show loading while checking authentication
+  useEffect(() => {
+    if (user?.isBlock) {
+      toast.error("⚠️ Your account has been blocked by admin.");
+      logout();
+    }
+  }, [user, logout]);
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
-  // If not logged in
-  if (!user || !user.id) {
+  if (!user || user.isBlock) {
     return <Navigate to="/login" replace />;
   }
 
-  // If logged in
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 

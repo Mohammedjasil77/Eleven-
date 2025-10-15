@@ -2,12 +2,12 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../Api/Apipage";
 import { AuthContext } from "../../Context/AuthContext";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,32 +17,46 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+    setLoading(true);
 
     try {
+      // ✅ Fetch users from db.json via your api
       const response = await api.get("/users", {
         params: { email: formData.email, password: formData.password },
       });
 
-      if (response.data.length > 0) {
-        const user = response.data[0];
-
-        login(user);
-
-        setSuccess("✅ Login successful!");
-        
-        if (user.role === "admin") {
-          navigate("/admin-dashbord"); 
-        } else {
-          navigate("/"); 
-        }
-      } else {
-        setError("❌ Invalid email or password");
+      if (response.data.length === 0) {
+        toast.error("❌ Invalid email or password");
+        setLoading(false);
+        return;
       }
+
+      const user = response.data[0];
+
+      // ✅ Blocked user check (prevent login)
+      if (user.isBlock) {
+        toast.error("⚠️ Your account has been blocked by admin.");
+        localStorage.clear();
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Login success
+      login(user);
+      toast.success(`👋 Welcome back, ${user.name}!`);
+
+      // ✅ Navigate to proper dashboard
+      if (user.role === "admin") {
+        navigate("/admin-dashbord", { replace: true }); // replace = removes login from history
+      } else {
+        navigate("/", { replace: true });
+      }
+
     } catch (err) {
       console.error(err);
-      setError("⚠️ Something went wrong. Please try again.");
+      toast.error("⚠️ Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,18 +109,14 @@ const Login = () => {
           <div>
             <button
               type="submit"
+              disabled={loading}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition duration-150"
             >
-              Log In
+              {loading ? "Logging in..." : "Log In"}
             </button>
           </div>
-
-          {/* Error or Success */}
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {success && <p className="text-green-600 text-sm">{success}</p>}
         </form>
 
-        {/* Sign Up Link */}
         <p className="mt-8 text-center text-sm text-gray-600">
           Don't have an account?{" "}
           <a href="/register" className="font-medium text-black hover:underline">

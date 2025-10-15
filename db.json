@@ -19,7 +19,15 @@
       "password": "12345678",
       "role": "user",
       "isBlock": false,
-      "cart": [],
+      "cart": [
+        {
+          "id": "1760536765210",
+          "productId": "5",
+          "size": "37",
+          "color": "black",
+          "quantity": 1
+        }
+      ],
       "orders": [
         {
           "id": "ORD1760510012751",
@@ -109,6 +117,286 @@
           "shipping": 0,
           "tax": 15300,
           "total": 100300,
+          "status": "confirmed"
+        },
+        {
+          "id": "ORD1760515215095",
+          "date": "2025-10-15T08:00:15.095Z",
+          "items": [
+            {
+              "id": "1760514998764",
+              "productId": "5",
+              "name": "Jordaan Leather Loafer",
+              "price": 95000,
+              "quantity": 2,
+              "size": "37",
+              "color": "black",
+              "image": "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+              "id": "1760515194078",
+              "productId": "2",
+              "name": "Rhython Platform Leather",
+              "price": 120000,
+              "quantity": 1,
+              "size": "37",
+              "color": "Default",
+              "image": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "Shahil",
+            "lastName": "shahil",
+            "email": "shahil@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 1234",
+            "expiryDate": "11/11",
+            "cvv": "123",
+            "nameOnCard": "ss",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 310000,
+          "shipping": 0,
+          "tax": 55800,
+          "total": 365800,
+          "status": "confirmed"
+        },
+        {
+          "id": "ORD1760515266613",
+          "date": "2025-10-15T08:01:06.614Z",
+          "items": [
+            {
+              "id": "3",
+              "productId": "3",
+              "name": "Princetown Leather Slipper",
+              "price": 75000,
+              "quantity": 1,
+              "size": "37",
+              "color": "black",
+              "image": "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "Shahil",
+            "lastName": "Jasil",
+            "email": "shahil@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 3451",
+            "expiryDate": "11/11",
+            "cvv": "123",
+            "nameOnCard": "sa",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 75000,
+          "shipping": 0,
+          "tax": 13500,
+          "total": 88500,
+          "status": "confirmed"
+        },
+        {
+          "id": "ORD1760519860140",
+          "date": "2025-10-15T09:17:40.140Z",
+          "items": [
+            {
+              "id": "1760515241845",
+              "productId": "3",
+              "name": "Princetown Leather Slipper",
+              "price": 75000,
+              "quantity": 1,
+              "size": "37",
+              "color": "black",
+              "image": "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "Shahil",
+            "lastName": "Jasil",
+            "email": "shahil@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 3451",
+            "expiryDate": "11/11",
+            "cvv": "123",
+            "nameOnCard": "sa",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 75000,
+          "shipping": 0,
+          "tax": 13500,
+          "total": 88500,
+          "status": "confirmed"
+        },
+        {
+          "id": "ORD1760527585169",
+          "date": "2025-10-15T11:26:25.169Z",
+          "items": [
+            {
+              "id": "6",
+              "productId": "6",
+              "name": "Kids Running Sneakers",
+              "price": 45000,
+              "quantity": 1,
+              "size": "28",
+              "color": "blue",
+              "image": "https://images.unsplash.com/photo-1543508282-6319a3e2621f?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "Shahil",
+            "lastName": "Jasil",
+            "email": "shahil@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 3451",
+            "expiryDate": "11/11",
+            "cvv": "123",
+            "nameOnCard": "sa",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "nextday",
+            "name": "Next Day Delivery",
+            "price": 1000,
+            "delivery": "Next business day"
+          },
+          "subtotal": 45000,
+          "shipping": 1000,
+          "tax": 8100,
+          "total": 54100,
+          "status": "confirmed"
+        },
+        {
+          "id": "ORD1760534449222",
+          "date": "2025-10-15T13:20:49.222Z",
+          "items": [
+            {
+              "id": "3",
+              "productId": "3",
+              "name": "Princetown Leather Slipper",
+              "price": 75000,
+              "quantity": 1,
+              "size": "37",
+              "color": "black",
+              "image": "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "Shahil",
+            "lastName": "shahil",
+            "email": "shahil@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 2111",
+            "expiryDate": "11/11",
+            "cvv": "0000",
+            "nameOnCard": "ss",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 75000,
+          "shipping": 0,
+          "tax": 13500,
+          "total": 88500,
+          "status": "confirmed"
+        },
+        {
+          "id": "ORD1760534478490",
+          "date": "2025-10-15T13:21:18.490Z",
+          "items": [
+            {
+              "id": "3",
+              "productId": "3",
+              "name": "Princetown Leather Slipper",
+              "price": 75000,
+              "quantity": 1,
+              "size": "37",
+              "color": "black",
+              "image": "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "Shahil",
+            "lastName": "shahil",
+            "email": "shahil@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 2111",
+            "expiryDate": "11/11",
+            "cvv": "0000",
+            "nameOnCard": "ss",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 75000,
+          "shipping": 0,
+          "tax": 13500,
+          "total": 88500,
           "status": "confirmed"
         }
       ],
@@ -838,7 +1126,7 @@
       "price": 80000,
       "category": "Sports",
       "gender": "Men",
-      "count": 0,
+      "count": 5,
       "description": "Premium sports shoes with excellent grip and comfort",
       "image": "https://images.unsplash.com/photo-1605348532760-6753d2c43329?auto=format&fit=crop&w=800&q=80",
       "id": "b0e5"

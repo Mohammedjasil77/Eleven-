@@ -2,6 +2,7 @@ import React from "react";
 import { useLocation } from "react-router-dom";
 import ProtectedRoute from "./Context/ProtectedRoute";
 import AdminRoute from "./Pages/Auth/AdminRoute";
+import PublicRoute from "./Pages/Auth/PublicRoute";
 import { Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import HomePage from "./Pages/NonAuth/Home/HomePage";
@@ -22,6 +23,8 @@ import "react-toastify/dist/ReactToastify.css";
 import TrackOrder from "./Pages/NonAuth/TrackOrder";
 import Contact from "./Pages/NonAuth/Contact";
 import OrderTrackingDetail from "./Pages/NonAuth/OrderTrackingDetail";
+import { useBlockCheck } from "./Context/HandileLogin";
+import ProfileModal from "./Common/ProfileModal";
 
 // Admin side //
 import AdminDashboard from "./Components/Admin/pages/Admin Pages/AdminDashbord";
@@ -54,13 +57,14 @@ const AppLayout = ({ children }) => {
 };
 
 function App() {
+  useBlockCheck();
   return (
     <>
       <AppLayout>
         <Routes>
           {/* User Routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<PublicRoute> <Login /></PublicRoute>} />
           <Route path="/register" element={<Registration />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/new-arrivals" element={<NewArrivals />} />
@@ -84,6 +88,10 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="profile" element={<ProtectedRoute>
+            <ProfileModal />
+          </ProtectedRoute>}/>
           <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/track-order/:orderId" element={<OrderTrackingDetail/>}/>
           <Route path="/contact" element={<Contact />} />
