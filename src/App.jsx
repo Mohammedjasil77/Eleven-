@@ -30,6 +30,7 @@ import ProductManagement from "./Components/Admin/pages/Admin Pages/Products/Pro
 import AddProduct from "./Components/Admin/pages/Admin Pages/Products/AddProducts";
 import EditProduct from "./Components/Admin/pages/Admin Pages/Products/EditProducts";
 import OrderManagement from "./Components/Admin/pages/Admin Pages/Order/OrderManagment";
+import OrderDetails from "./Components/Admin/pages/Admin Pages/Order/OrderDetails";
 
 
 // Layout component to handle conditional rendering
@@ -144,6 +145,9 @@ function App() {
               </AdminRoute>
             } 
           />
+
+          <Route path="/admin/orders/:id" element={<OrderDetails />} />
+
 
           {/* 404 route should be last */}
           <Route path="*" element={<NotFound />} />

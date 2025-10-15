@@ -19,43 +19,21 @@
       "password": "12345678",
       "role": "user",
       "isBlock": false,
-      "cart": [
-        {
-          "id": "1760439995095",
-          "productId": "3",
-          "size": "41",
-          "color": "Default",
-          "quantity": 20
-        },
-        {
-          "id": "1760440010253",
-          "productId": "3",
-          "size": "38",
-          "color": "Default",
-          "quantity": 20
-        },
-        {
-          "id": "1760440575281",
-          "productId": "2",
-          "size": "37",
-          "color": "Default",
-          "quantity": 1
-        }
-      ],
+      "cart": [],
       "orders": [
         {
-          "id": "ORD1760428673224",
-          "date": "2025-10-14T07:57:53.224Z",
+          "id": "ORD1760510012751",
+          "date": "2025-10-15T06:33:32.751Z",
           "items": [
             {
-              "id": "5",
-              "productId": "5",
-              "name": "Jordaan Leather Loafer",
-              "price": 95000,
+              "id": "1760509997323",
+              "productId": "2",
+              "name": "Rhython Platform Leather",
+              "price": 120000,
               "quantity": 1,
               "size": "37",
-              "color": "black",
-              "image": "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=800&q=80"
+              "color": "Default",
+              "image": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80"
             }
           ],
           "shippingInfo": {
@@ -70,10 +48,10 @@
             "country": "India"
           },
           "paymentInfo": {
-            "cardNumber": "**** **** **** 5678",
+            "cardNumber": "**** **** **** 4433",
             "expiryDate": "11/11",
-            "cvv": "123",
-            "nameOnCard": "hbh",
+            "cvv": "111",
+            "nameOnCard": "11",
             "saveCard": false
           },
           "shippingMethod": {
@@ -82,22 +60,59 @@
             "price": 0,
             "delivery": "5-7 business days"
           },
-          "subtotal": 95000,
+          "subtotal": 120000,
           "shipping": 0,
-          "tax": 17100,
-          "total": 112100,
+          "tax": 21600,
+          "total": 141600,
+          "status": "confirmed"
+        },
+        {
+          "id": "ORD1760510087070",
+          "date": "2025-10-15T06:34:47.070Z",
+          "items": [
+            {
+              "id": "1760510060899",
+              "productId": "4",
+              "name": "Ace Embroidered Sneaker",
+              "price": 85000,
+              "quantity": 1,
+              "size": "41",
+              "color": "Default",
+              "image": "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "Shahil",
+            "lastName": "Jasil",
+            "email": "shahil@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 1111",
+            "expiryDate": "11/11",
+            "cvv": "123",
+            "nameOnCard": "aaa",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 85000,
+          "shipping": 0,
+          "tax": 15300,
+          "total": 100300,
           "status": "confirmed"
         }
       ],
-      "wishlist": [
-        {
-          "id": "1760434838850",
-          "productId": "2",
-          "size": "M",
-          "color": "Default",
-          "addedAt": "2025-10-14T09:40:38.850Z"
-        }
-      ],
+      "wishlist": [],
       "created_at": "2025-09-30T08:37:25.368Z"
     },
     {
@@ -174,7 +189,7 @@
           "shipping": 0,
           "tax": 16200,
           "total": 106200,
-          "status": "confirmed"
+          "status": "delivered"
         },
         {
           "id": "ORD1760422562546",
@@ -239,7 +254,7 @@
           "shipping": 0,
           "tax": 48240,
           "total": 316240,
-          "status": "confirmed"
+          "status": "processing"
         },
         {
           "id": "ORD1760423948599",
@@ -344,7 +359,7 @@
         {
           "id": "ORD1760355872251",
           "date": "2025-01-06T16:45:00Z",
-          "status": "processing",
+          "status": "delivered",
           "items": [
             {
               "id": "6",
@@ -407,24 +422,14 @@
       "isBlock": false,
       "cart": [
         {
-          "id": "1760424569279sgjg4oroo",
-          "productId": "2",
-          "name": "Rhython Platform Leather",
-          "size": "36",
-          "color": "black",
+          "id": "1760509814575m9sf96y18",
+          "productId": "6",
+          "name": "Kids Running Sneakers",
+          "size": "28",
+          "color": "blue",
           "quantity": 1,
-          "price": 120000,
-          "image": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80"
-        },
-        {
-          "id": "1760424573641pvhqvjlk4",
-          "productId": "2",
-          "name": "Rhython Platform Leather",
-          "size": "36",
-          "color": "black",
-          "quantity": 1,
-          "price": 120000,
-          "image": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80"
+          "price": 45000,
+          "image": "https://images.unsplash.com/photo-1543508282-6319a3e2621f?auto=format&fit=crop&w=800&q=80"
         }
       ],
       "orders": [
@@ -471,7 +476,7 @@
           "shipping": 0,
           "tax": 21600,
           "total": 141600,
-          "status": "confirmed"
+          "status": "delivered"
         },
         {
           "id": "ORD1760426540784",
@@ -516,6 +521,106 @@
           "shipping": 0,
           "tax": 21600,
           "total": 141600,
+          "status": "cancelled"
+        },
+        {
+          "id": "ORD1760507199781",
+          "date": "2025-10-15T05:46:39.781Z",
+          "items": [
+            {
+              "id": "1760424569279sgjg4oroo",
+              "productId": "2",
+              "name": "Rhython Platform Leather",
+              "price": 120000,
+              "quantity": 1,
+              "size": "36",
+              "color": "black",
+              "image": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+              "id": "1760424573641pvhqvjlk4",
+              "productId": "2",
+              "name": "Rhython Platform Leather",
+              "price": 120000,
+              "quantity": 1,
+              "size": "36",
+              "color": "black",
+              "image": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "savad",
+            "lastName": "edvin",
+            "email": "savad@gmail.com",
+            "phone": "06282424075",
+            "address": "iuyugyuhfcvgtcv",
+            "city": "jhiugiu",
+            "state": "jhvgyfgyu",
+            "zipCode": "21918715",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 6712",
+            "expiryDate": "11/11",
+            "cvv": "123",
+            "nameOnCard": "SBI",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 240000,
+          "shipping": 0,
+          "tax": 43200,
+          "total": 283200,
+          "status": "delivered"
+        },
+        {
+          "id": "ORD1760509799138",
+          "date": "2025-10-15T06:29:59.138Z",
+          "items": [
+            {
+              "id": "6",
+              "productId": "6",
+              "name": "Kids Running Sneakers",
+              "price": 45000,
+              "quantity": 1,
+              "size": "28",
+              "color": "blue",
+              "image": "https://images.unsplash.com/photo-1543508282-6319a3e2621f?auto=format&fit=crop&w=800&q=80"
+            }
+          ],
+          "shippingInfo": {
+            "firstName": "savad",
+            "lastName": "shahil",
+            "email": "savad@gmail.com",
+            "phone": "09645853612",
+            "address": "xxx",
+            "city": "xxx",
+            "state": "xxx",
+            "zipCode": "625225",
+            "country": "India"
+          },
+          "paymentInfo": {
+            "cardNumber": "**** **** **** 4433",
+            "expiryDate": "11/11",
+            "cvv": "111",
+            "nameOnCard": "11",
+            "saveCard": false
+          },
+          "shippingMethod": {
+            "id": "standard",
+            "name": "Standard Shipping",
+            "price": 0,
+            "delivery": "5-7 business days"
+          },
+          "subtotal": 45000,
+          "shipping": 0,
+          "tax": 8100,
+          "total": 53100,
           "status": "confirmed"
         }
       ],
@@ -729,15 +834,14 @@
       "created_at": "2025-09-26T11:00:00Z"
     },
     {
-      "id": "b0e5",
       "name": "Air Jordan Nike",
       "price": 80000,
       "category": "Sports",
       "gender": "Men",
-      "count": 10,
+      "count": 0,
       "description": "Premium sports shoes with excellent grip and comfort",
       "image": "https://images.unsplash.com/photo-1605348532760-6753d2c43329?auto=format&fit=crop&w=800&q=80",
-      "createdAt": "2025-10-13T07:28:04.438Z"
+      "id": "b0e5"
     }
   ],
   "categories": [
