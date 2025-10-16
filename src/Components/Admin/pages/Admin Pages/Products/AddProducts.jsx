@@ -9,20 +9,52 @@ const AddProduct = () => {
   const [formData, setFormData] = useState({
     name: "",
     price: "",
+    originalPrice: "", 
     category: "",
     gender: "",
     count: "",
     description: "",
-    image: ""
+    image: "", 
+    sizes: ["S", "M", "L", "XL"],
+    featured: false,
+    new: true,
+    tags: []
   });
 
   const categories = ["Sneakers", "Boots", "Sandals", "Loafers", "Sports", "Casual", "Formal"];
   const genders = ["Men", "Women", "Kids"];
+  const availableSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
   const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    
+    if (type === "checkbox") {
+      setFormData({
+        ...formData,
+        [name]: checked
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
+  };
+
+  // Handle size selection
+  const handleSizeToggle = (size) => {
+    const currentSizes = [...formData.sizes];
+    const sizeIndex = currentSizes.indexOf(size);
+    
+    if (sizeIndex > -1) {
+      currentSizes.splice(sizeIndex, 1);
+    } else {
+      currentSizes.push(size);
+    }
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      sizes: currentSizes
     });
   };
 
@@ -31,11 +63,24 @@ const AddProduct = () => {
     setLoading(true);
 
     try {
+      // Format data to match ProductCard expectations
       const productData = {
-        ...formData,
+        name: formData.name,
         price: parseInt(formData.price),
+        originalPrice: parseInt(formData.originalPrice || formData.price), // Use price if originalPrice not set
+        category: formData.category,
+        gender: formData.gender,
         count: parseInt(formData.count),
-        createdAt: new Date().toISOString()
+        description: formData.description,
+        // Convert single image to images array for ProductCard
+        images: formData.image ? [formData.image] : [],
+        // Include all required fields
+        sizes: formData.sizes,
+        featured: formData.featured,
+        new: formData.new,
+        tags: formData.tags,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       await api.post("/products", productData);
@@ -84,7 +129,7 @@ const AddProduct = () => {
               />
             </div>
 
-            {/* Price and Stock */}
+            {/* Price and Original Price */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -103,6 +148,27 @@ const AddProduct = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Original Price (₹)
+                </label>
+                <input
+                  type="number"
+                  name="originalPrice"
+                  value={formData.originalPrice}
+                  onChange={handleChange}
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter original price for discount"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave empty if no discount
+                </p>
+              </div>
+            </div>
+
+            {/* Stock and Category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Stock Quantity *
                 </label>
                 <input
@@ -116,10 +182,6 @@ const AddProduct = () => {
                   placeholder="Enter stock quantity"
                 />
               </div>
-            </div>
-
-            {/* Category and Gender */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category *
@@ -137,6 +199,10 @@ const AddProduct = () => {
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Gender and Sizes */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gender *
@@ -154,24 +220,76 @@ const AddProduct = () => {
                   ))}
                 </select>
               </div>
+              
+              {/* Size Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Available Sizes *
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {availableSizes.map(size => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => handleSizeToggle(size)}
+                      className={`px-3 py-2 border rounded-lg text-sm transition-colors ${
+                        formData.sizes.includes(size)
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-black"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Selected: {formData.sizes.join(", ") || "None"}
+                </p>
+              </div>
             </div>
 
             {/* Image URL */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image URL
+                Image URL *
               </label>
               <input
                 type="url"
                 name="image"
                 value={formData.image}
                 onChange={handleChange}
+                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="https://example.com/image.jpg"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Optional: Provide a direct image URL for the product
+                Provide a direct image URL for the product
               </p>
+            </div>
+
+            {/* Checkboxes */}
+            <div className="flex space-x-6">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="featured"
+                  checked={formData.featured}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">Featured Product</span>
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="new"
+                  checked={formData.new}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">New Arrival</span>
+              </label>
             </div>
 
             {/* Description */}
@@ -216,41 +334,91 @@ const AddProduct = () => {
           </form>
         </div>
 
-        {/* Preview Card */}
-        {(formData.name || formData.image) && (
-          <div className="mt-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-w-sm">
-              <div className="relative w-full pt-[100%] bg-gray-100 rounded-lg mb-4">
-                {formData.image ? (
-                  <img 
-                    src={formData.image} 
-                    alt="Preview"
-                    className="absolute top-0 left-0 w-full h-full object-cover rounded-lg"
-                  />
-                ) : (
-                  <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-gray-200 rounded-lg">
-                    <span className="text-gray-400 text-sm">No Image</span>
-                  </div>
+        {/* Enhanced Preview Card */}
+        <div className="mt-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-w-sm">
+            {/* Image Preview */}
+            <div className="relative aspect-[3/4] overflow-hidden mb-4 bg-gray-100 rounded-lg">
+              {formData.image ? (
+                <img 
+                  src={formData.image} 
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                  <span className="text-gray-400 text-sm">No Image</span>
+                </div>
+              )}
+              
+              {/* Badges Preview */}
+              <div className="absolute top-4 left-4 space-y-2">
+                {formData.new && (
+                  <span className="bg-white text-black px-3 py-1 text-xs tracking-widest uppercase font-light">
+                    New
+                  </span>
+                )}
+                {formData.featured && (
+                  <span className="bg-black text-white px-3 py-1 text-xs tracking-widest uppercase font-light">
+                    Featured
+                  </span>
+                )}
+                {formData.originalPrice > formData.price && (
+                  <span className="bg-red-600 text-white px-3 py-1 text-xs tracking-widest uppercase font-light">
+                    Sale
+                  </span>
                 )}
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">
+            </div>
+
+            {/* Product Info Preview */}
+            <div className="text-center">
+              <h4 className="text-lg font-light tracking-wide mb-2">
                 {formData.name || "Product Name"}
               </h4>
-              <p className="text-sm text-gray-500 mb-2 capitalize">
+
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <p className="text-gray-600 font-light tracking-widest">
+                  {formData.price ? `₹${parseInt(formData.price).toLocaleString()}` : "₹0"}
+                </p>
+                {formData.originalPrice > formData.price && (
+                  <p className="text-gray-400 text-sm font-light line-through">
+                    ₹{parseInt(formData.originalPrice).toLocaleString()}
+                  </p>
+                )}
+              </div>
+
+              <p className="text-gray-500 text-xs uppercase tracking-widest font-light mb-3">
                 {formData.category || "Category"} • {formData.gender || "Gender"}
               </p>
-              <p className="text-lg font-bold text-gray-900">
-                {formData.price ? `₹${parseInt(formData.price).toLocaleString()}` : "₹0"}
-              </p>
+
+              {/* Sizes Preview */}
+              {formData.sizes.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs text-gray-500 mb-2">Available Sizes:</p>
+                  <div className="flex justify-center gap-1">
+                    {formData.sizes.map(size => (
+                      <span key={size} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        {size}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-2">
-                <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                <span className={`px-2 py-1 text-xs rounded-full ${
+                  parseInt(formData.count) > 0 
+                    ? "bg-green-100 text-green-800" 
+                    : "bg-red-100 text-red-800"
+                }`}>
                   Stock: {formData.count || 0}
                 </span>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

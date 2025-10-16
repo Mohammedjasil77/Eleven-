@@ -26,6 +26,13 @@
           "size": "37",
           "color": "black",
           "quantity": 1
+        },
+        {
+          "id": "1760578036320",
+          "productId": "9f7d",
+          "size": "M",
+          "color": "Default",
+          "quantity": 1
         }
       ],
       "orders": [
@@ -1130,6 +1137,29 @@
       "description": "Premium sports shoes with excellent grip and comfort",
       "image": "https://images.unsplash.com/photo-1605348532760-6753d2c43329?auto=format&fit=crop&w=800&q=80",
       "id": "b0e5"
+    },
+    {
+      "id": "29b8",
+      "name": "new product",
+      "price": 1000000,
+      "originalPrice": 1000,
+      "category": "Loafers",
+      "gender": "Men",
+      "count": 10,
+      "description": "ssc",
+      "images": [
+        "https://images.unsplash.com/photo-1605348532760-6753d2c43329?auto=format&fit=crop&w=800&q=80"
+      ],
+      "sizes": [
+        "XS",
+        "S",
+        "M"
+      ],
+      "featured": false,
+      "new": true,
+      "tags": [],
+      "createdAt": "2025-10-16T01:36:52.147Z",
+      "updatedAt": "2025-10-16T01:36:52.147Z"
     }
   ],
   "categories": [
