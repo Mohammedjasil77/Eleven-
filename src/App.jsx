@@ -34,6 +34,7 @@ import AddProduct from "./Components/Admin/pages/Admin Pages/Products/AddProduct
 import EditProduct from "./Components/Admin/pages/Admin Pages/Products/EditProducts";
 import OrderManagement from "./Components/Admin/pages/Admin Pages/Order/OrderManagment";
 import OrderDetails from "./Components/Admin/pages/Admin Pages/Order/OrderDetails";
+import { useAuth } from "./Context/AuthContext";
 
 
 // Layout component to handle conditional rendering
@@ -55,8 +56,9 @@ const AppLayout = ({ children }) => {
     </> 
   );
 };
-
+ 
 function App() {
+
   useBlockCheck();
   return (
     <>
@@ -160,7 +162,10 @@ function App() {
           {/* 404 route should be last */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+
       </AppLayout>
+      
+
 
       {/* Toast Container for notifications */}
       <ToastContainer

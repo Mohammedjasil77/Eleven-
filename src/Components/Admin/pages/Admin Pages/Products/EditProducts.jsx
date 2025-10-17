@@ -1,4 +1,3 @@
-// src/Components/Admin/pages/Admin Pages/Products/EditProduct.js
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../../../../Api/Apipage";

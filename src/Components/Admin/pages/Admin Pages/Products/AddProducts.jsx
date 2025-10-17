@@ -1,4 +1,3 @@
-// src/Components/Admin/pages/Admin Pages/Products/AddProduct.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../../../../Api/Apipage";
@@ -6,56 +5,61 @@ import api from "../../../../../../Api/Apipage";
 const AddProduct = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  const availableColors = [
+    "Black",
+    "White",
+    "Red",
+    "Blue",
+    "Green",
+    "Yellow",
+    "Brown",
+    "Gray",
+  ];
+
   const [formData, setFormData] = useState({
     name: "",
     price: "",
-    originalPrice: "", 
+    originalPrice: "",
     category: "",
     gender: "",
     count: "",
+    colors: [], // ✅ multiple colors
     description: "",
-    image: "", 
+    image: "",
     sizes: ["S", "M", "L", "XL"],
     featured: false,
     new: true,
-    tags: []
+    tags: [],
   });
 
-  const categories = ["Sneakers", "Boots", "Sandals", "Loafers", "Sports", "Casual", "Formal"];
+  const categories = [
+    "Sneakers",
+    "Boots",
+    "Sandals",
+    "Loafers",
+    "Sports",
+    "Casual",
+    "Formal",
+  ];
   const genders = ["Men", "Women", "Kids"];
   const availableSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
     if (type === "checkbox") {
-      setFormData({
-        ...formData,
-        [name]: checked
-      });
+      setFormData({ ...formData, [name]: checked });
     } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
+      setFormData({ ...formData, [name]: value });
     }
   };
 
-  // Handle size selection
   const handleSizeToggle = (size) => {
     const currentSizes = [...formData.sizes];
-    const sizeIndex = currentSizes.indexOf(size);
-    
-    if (sizeIndex > -1) {
-      currentSizes.splice(sizeIndex, 1);
-    } else {
-      currentSizes.push(size);
-    }
-    
-    setFormData({
-      ...formData,
-      sizes: currentSizes
-    });
+    const index = currentSizes.indexOf(size);
+    if (index > -1) currentSizes.splice(index, 1);
+    else currentSizes.push(size);
+    setFormData({ ...formData, sizes: currentSizes });
   };
 
   const handleSubmit = async (e) => {
@@ -63,24 +67,22 @@ const AddProduct = () => {
     setLoading(true);
 
     try {
-      // Format data to match ProductCard expectations
       const productData = {
         name: formData.name,
         price: parseInt(formData.price),
-        originalPrice: parseInt(formData.originalPrice || formData.price), // Use price if originalPrice not set
+        originalPrice: parseInt(formData.originalPrice || formData.price),
         category: formData.category,
         gender: formData.gender,
         count: parseInt(formData.count),
         description: formData.description,
-        // Convert single image to images array for ProductCard
         images: formData.image ? [formData.image] : [],
-        // Include all required fields
         sizes: formData.sizes,
+        colors: formData.colors, // ✅ multiple colors
         featured: formData.featured,
         new: formData.new,
         tags: formData.tags,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       await api.post("/products", productData);
@@ -95,11 +97,11 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50/50 p-6 absolute top-0 left-0 w-" >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <button 
+          <button
             onClick={() => navigate("/admin/products")}
             className="text-blue-600 hover:text-blue-800 mb-4 flex items-center text-sm font-medium"
           >
@@ -165,6 +167,52 @@ const AddProduct = () => {
               </div>
             </div>
 
+            {/* Color Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Colors *
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {availableColors.map((clr) => (
+                  <button
+                    key={clr}
+                    type="button"
+                    onClick={() => {
+                      const currentColors = [...formData.colors];
+                      const index = currentColors.indexOf(clr);
+                      if (index > -1) currentColors.splice(index, 1);
+                      else currentColors.push(clr);
+                      setFormData({ ...formData, colors: currentColors });
+                    }}
+                    className={`px-4 py-2 border rounded-lg text-sm transition-all ${
+                      formData.colors.includes(clr)
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-black"
+                    }`}
+                  >
+                    {clr}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <p className="text-xs text-gray-500">Selected:</p>
+                {formData.colors.length > 0 ? (
+                  <div className="flex gap-2">
+                    {formData.colors.map((clr) => (
+                      <span
+                        key={clr}
+                        className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-700 border"
+                      >
+                        {clr}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">None</p>
+                )}
+              </div>
+            </div>
+
             {/* Stock and Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -194,8 +242,10 @@ const AddProduct = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select Category</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -215,19 +265,21 @@ const AddProduct = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select Gender</option>
-                  {genders.map(gender => (
-                    <option key={gender} value={gender}>{gender}</option>
+                  {genders.map((gender) => (
+                    <option key={gender} value={gender}>
+                      {gender}
+                    </option>
                   ))}
                 </select>
               </div>
-              
+
               {/* Size Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Available Sizes *
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {availableSizes.map(size => (
+                  {availableSizes.map((size) => (
                     <button
                       key={size}
                       type="button"
@@ -277,9 +329,11 @@ const AddProduct = () => {
                   onChange={handleChange}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="ml-2 text-sm text-gray-700">Featured Product</span>
+                <span className="ml-2 text-sm text-gray-700">
+                  Featured Product
+                </span>
               </label>
-              
+
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -334,15 +388,15 @@ const AddProduct = () => {
           </form>
         </div>
 
-        {/* Enhanced Preview Card */}
+        {/* Preview Card */}
         <div className="mt-8">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-w-sm">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-w-sm mx-auto">
             {/* Image Preview */}
             <div className="relative aspect-[3/4] overflow-hidden mb-4 bg-gray-100 rounded-lg">
               {formData.image ? (
-                <img 
-                  src={formData.image} 
+                <img
+                  src={formData.image}
                   alt="Preview"
                   className="w-full h-full object-cover"
                 />
@@ -351,8 +405,8 @@ const AddProduct = () => {
                   <span className="text-gray-400 text-sm">No Image</span>
                 </div>
               )}
-              
-              {/* Badges Preview */}
+
+              {/* Badges */}
               <div className="absolute top-4 left-4 space-y-2">
                 {formData.new && (
                   <span className="bg-white text-black px-3 py-1 text-xs tracking-widest uppercase font-light">
@@ -372,7 +426,7 @@ const AddProduct = () => {
               </div>
             </div>
 
-            {/* Product Info Preview */}
+            {/* Product Info */}
             <div className="text-center">
               <h4 className="text-lg font-light tracking-wide mb-2">
                 {formData.name || "Product Name"}
@@ -380,7 +434,9 @@ const AddProduct = () => {
 
               <div className="flex items-center justify-center gap-2 mb-2">
                 <p className="text-gray-600 font-light tracking-widest">
-                  {formData.price ? `₹${parseInt(formData.price).toLocaleString()}` : "₹0"}
+                  {formData.price
+                    ? `₹${parseInt(formData.price).toLocaleString()}`
+                    : "₹0"}
                 </p>
                 {formData.originalPrice > formData.price && (
                   <p className="text-gray-400 text-sm font-light line-through">
@@ -390,7 +446,8 @@ const AddProduct = () => {
               </div>
 
               <p className="text-gray-500 text-xs uppercase tracking-widest font-light mb-3">
-                {formData.category || "Category"} • {formData.gender || "Gender"}
+                {formData.category || "Category"} •{" "}
+                {formData.gender || "Gender"}
               </p>
 
               {/* Sizes Preview */}
@@ -398,8 +455,11 @@ const AddProduct = () => {
                 <div className="mb-3">
                   <p className="text-xs text-gray-500 mb-2">Available Sizes:</p>
                   <div className="flex justify-center gap-1">
-                    {formData.sizes.map(size => (
-                      <span key={size} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    {formData.sizes.map((size) => (
+                      <span
+                        key={size}
+                        className="text-xs bg-gray-100 px-2 py-1 rounded"
+                      >
                         {size}
                       </span>
                     ))}
@@ -407,12 +467,33 @@ const AddProduct = () => {
                 </div>
               )}
 
+              {/* Colors Preview */}
+              {formData.colors.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs text-gray-500 mb-2">
+                    Available Colors:
+                  </p>
+                  <div className="flex justify-center gap-2">
+                    {formData.colors.map((clr) => (
+                      <div
+                        key={clr}
+                        className="w-5 h-5 rounded-full border border-gray-300"
+                        style={{ backgroundColor: clr.toLowerCase() }}
+                        title={clr}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-2">
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  parseInt(formData.count) > 0 
-                    ? "bg-green-100 text-green-800" 
-                    : "bg-red-100 text-red-800"
-                }`}>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    parseInt(formData.count) > 0
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
                   Stock: {formData.count || 0}
                 </span>
               </div>

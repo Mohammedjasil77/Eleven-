@@ -1,7 +1,7 @@
-// src/Components/Admin/pages/Admin Pages/Products/ProductsManagment.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../../../../Api/Apipage";
+import AddProduct from "./AddProducts";
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -10,7 +10,33 @@ const ProductManagement = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [showAddProductModal,setShowAddModal] =useState(false)
+  const [addminToAdd,setAddToAdmin] = useState(null)
   const navigate = useNavigate();
+  
+
+  const handileShowAddProduct=() =>{
+    setShowAddModal();
+    setAddToAdmin(true);
+
+  };
+
+  
+  const confirmAddAdmin = async () => {
+    if (addminToAdd) return;
+    try {
+      await api.post("/products", productData);
+      alert("product added successfully")
+      setAddToAdmin(false);
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }finally{
+      setLoading(false)
+    }
+  };
+
 
   useEffect(() => {
     fetchProducts();
@@ -133,7 +159,16 @@ const ProductManagement = () => {
         >
           Add New Product
         </button>
+           <button
+                      onClick={() => setShowAddModal(true)}
+                      className="px-3 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-300"
+                    >
+                      add new product
+                    </button>
       </div>
+      
+  
+      
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -378,6 +413,7 @@ const ProductManagement = () => {
           )}
         </div>
       )}
+      {showAddProductModal && <AddProduct/>}
     </div>
   );
 };

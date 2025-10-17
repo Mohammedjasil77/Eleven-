@@ -9,12 +9,15 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   
-  const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist, wishlistItems } = useWishlist();
+  const { addToCart, cartItems, isInCart } = useCart(); // Use the isInCart from context
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
 
   // Check if product is in wishlist
   const isWishlisted = isInWishlist(product?.id, selectedSize, selectedColor);
+
+  // FIXED: Use the isInCart function from CartContext
+  const productInCart = isInCart(product?.id, selectedSize, selectedColor);
 
   useEffect(() => {
     if (product) {
@@ -59,34 +62,41 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
     }
   };
 
-  // FIXED: Buy Now function
+  // Function to handle view cart
+  const handleViewCart = () => {
+    navigate("/cart");
+    onClose();
+  };
+
   const handleBuyNow = async () => {
     if (!selectedSize || !selectedColor) {
       alert("Please select size and color");
       return;
     }
 
-    // First add to cart
-    const result = await addToCart(product.id, selectedSize, selectedColor, quantity);
-    if (result.success) {
-      // Then navigate to buy-now page
-      navigate("/buy-now", { 
-        state: { 
-          product: {
-            ...product,
-            selectedSize: selectedSize,
-            selectedColor: selectedColor,
-            quantity: quantity
-          }
-        } 
-      });
-      onClose(); // Close the modal
-    } else {
-      alert(result.message);
+    // If product is not in cart, add it first
+    if (!productInCart) {
+      const result = await addToCart(product.id, selectedSize, selectedColor, quantity);
+      if (!result.success) {
+        alert(result.message);
+        return;
+      }
     }
+
+    // Then navigate to buy-now page
+    navigate("/buy-now", { 
+      state: { 
+        product: {
+          ...product,
+          selectedSize: selectedSize,
+          selectedColor: selectedColor,
+          quantity: quantity
+        }
+      } 
+    });
+    onClose();
   };
 
-  // FIXED: Proper wishlist toggle function
   const handleWishlistToggle = async () => {
     console.log('Product ID:', product?.id);
     console.log('Selected Size:', selectedSize);
@@ -94,13 +104,11 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
     console.log('Current wishlist status:', isWishlisted);
     
     try {
-      // Use toggleWishlist for both add and remove operations
       const result = await toggleWishlist(product, selectedSize, selectedColor);
       
       console.log('Wishlist operation result:', result);
       
       if (result.success) {
-        // Show appropriate message based on the action
         if (result.action === "added") {
           alert("Product added to wishlist!");
         } else if (result.action === "removed") {
@@ -146,7 +154,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
         {/* Debug Info - Remove in production */}
         <div className="absolute top-4 left-4 bg-yellow-100 p-2 rounded text-xs">
-          Wishlist: {isWishlisted ? 'IN' : 'OUT'} | Size: {selectedSize} | Color: {selectedColor}
+          Wishlist: {isWishlisted ? 'IN' : 'OUT'} | Cart: {productInCart ? 'IN' : 'OUT'} | Size: {selectedSize} | Color: {selectedColor}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2">
@@ -302,7 +310,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
               {/* Action Buttons */}
               <div className="space-y-3 pt-4">
-                {/* Buy Now & Add to Cart Buttons */}
+                {/* Buy Now & Cart Buttons */}
                 <div className="flex gap-3">
                   <button
                     onClick={handleBuyNow}
@@ -312,13 +320,26 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                     Buy Now
                   </button>
                   
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={product.count === 0 || !selectedSize || !selectedColor}
-                    className="flex-1 bg-black text-white py-3 px-6 text-sm tracking-widest uppercase font-light hover:bg-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Add to Cart
-                  </button>
+                  {/* Conditional Cart Button */}
+                  {!productInCart ? (
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={product.count === 0 || !selectedSize || !selectedColor}
+                      className="flex-1 bg-black text-white py-3 px-6 text-sm tracking-widest uppercase font-light hover:bg-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add to Cart
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleViewCart}
+                      className="flex-1 bg-green-600 text-white py-3 px-6 text-sm tracking-widest uppercase font-light hover:bg-green-700 transition duration-300 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      View in Cart
+                    </button>
+                  )}
                 </div>
 
                 {/* Wishlist Button - Full Width */}

@@ -8,8 +8,10 @@ import { toast } from "react-toastify";
 const ProductCard = ({ product }) => {
   const [showQuickView, setShowQuickView] = useState(false);
   const [showSizeModal, setShowSizeModal] = useState(false);
+  const [showColorModal, setShowColorModal] = useState(false);
   const [selectedSize, setSelectedSize] = useState("");
-  const { addToCart } = useCart();
+  const [selectedColor, setSelectedColor] = useState("");
+  const { addToCart, isInCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
 
@@ -19,6 +21,9 @@ const ProductCard = ({ product }) => {
       currency: "INR",
       maximumFractionDigits: 0,
     }).format(price);
+
+  // Check if product is in cart
+  const productInCart = isInCart(product.id, selectedSize, selectedColor);
 
   const handleProductAction = async (e, actionType) => {
     e.preventDefault();
@@ -34,10 +39,21 @@ const ProductCard = ({ product }) => {
       return;
     }
 
+    // Check if color is required but not selected
+    if (product.colors?.length > 0 && !selectedColor) {
+      toast.warning("🎨 Please select a color first!", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+      setShowColorModal(true);
+      return;
+    }
+
     const sizeToUse = selectedSize || "M";
+    const colorToUse = selectedColor || "Default";
 
     if (actionType === "cart") {
-      const result = await addToCart(product.id, sizeToUse, "Default", 1);
+      const result = await addToCart(product.id, sizeToUse, colorToUse, 1);
       if (result.success) {
         toast.success("🛒 Product added to cart successfully!");
       } else {
@@ -49,6 +65,7 @@ const ProductCard = ({ product }) => {
           product: {
             ...product,
             selectedSize: sizeToUse,
+            selectedColor: colorToUse,
           },
         },
       });
@@ -76,6 +93,12 @@ const ProductCard = ({ product }) => {
     setSelectedSize(size);
     setShowSizeModal(false);
     toast.success(`✅ Size ${size} selected!`);
+  };
+
+  const handleColorSelect = (color) => {
+    setSelectedColor(color);
+    setShowColorModal(false);
+    toast.success(`✅ Color ${color} selected!`);
   };
 
   const isWishlisted = isInWishlist(product.id);
@@ -111,6 +134,15 @@ const ProductCard = ({ product }) => {
               </span>
             )}
           </div>
+
+          {/* Cart Status Badge */}
+          {productInCart && (
+            <div className="absolute top-4 right-12 z-20">
+              <span className="bg-green-500 text-white px-2 py-1 text-xs rounded-full">
+                In Cart
+              </span>
+            </div>
+          )}
 
           {/* Wishlist Button */}
           <button
@@ -185,32 +217,72 @@ const ProductCard = ({ product }) => {
             {product.category}
           </p>
 
-          {/* Selected Size Display */}
-          {selectedSize && (
+          {/* Selected Size & Color Display */}
+          <div className="flex flex-col gap-2 mb-2">
+            {selectedSize && (
+              <div>
+                <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
+                  Size: {selectedSize}
+                </span>
+              </div>
+            )}
+            {selectedColor && (
+              <div>
+                <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded">
+                  Color: {selectedColor}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Cart Status Display */}
+          {productInCart && (
             <div className="mb-2">
               <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded">
-                Size: {selectedSize}
+                ✓ Already in Cart
               </span>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-2 mb-2">
             {/* Size Button */}
-            <button
-              onClick={() => setShowSizeModal(true)}
-              disabled={isOutOfStock}
-              className={`flex-1 py-3 text-xs tracking-widest uppercase font-light border transition duration-300 ${
-                isOutOfStock
-                  ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
-                  : selectedSize
-                  ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
-                  : "bg-white text-black border-gray-300 hover:bg-black hover:text-white"
-              }`}
-            >
-              {selectedSize ? `Size: ${selectedSize}` : "Select Size"}
-            </button>
+            {product.sizes?.length > 0 && (
+              <button
+                onClick={() => setShowSizeModal(true)}
+                disabled={isOutOfStock}
+                className={`flex-1 py-3 text-xs tracking-widest uppercase font-light border transition duration-300 ${
+                  isOutOfStock
+                    ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
+                    : selectedSize
+                    ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
+                    : "bg-white text-black border-gray-300 hover:bg-black hover:text-white"
+                }`}
+              >
+                {selectedSize ? `Size: ${selectedSize}` : "Select Size"}
+              </button>
+            )}
 
+            {/* Color Button */}
+            {product.colors?.length > 0 && (
+              <button
+                onClick={() => setShowColorModal(true)}
+                disabled={isOutOfStock}
+                className={`flex-1 py-3 text-xs tracking-widest uppercase font-light border transition duration-300 ${
+                  isOutOfStock
+                    ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
+                    : selectedColor
+                    ? "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
+                    : "bg-white text-black border-gray-300 hover:bg-black hover:text-white"
+                }`}
+              >
+                {selectedColor ? `Color: ${selectedColor}` : "Select Color"}
+              </button>
+            )}
+          </div>
+
+          {/* Buy Now and Add to Cart Buttons */}
+          <div className="flex gap-2 mb-3">
             {/* Buy Now Button */}
             <button
               onClick={(e) => handleProductAction(e, "buy")}
@@ -221,22 +293,28 @@ const ProductCard = ({ product }) => {
             </button>
           </div>
 
-          {/* Add to Cart Button */}
+          {/* Add to Cart Button - Updated with cart status */}
           <button
             onClick={(e) => handleProductAction(e, "cart")}
-            disabled={isOutOfStock}
+            disabled={isOutOfStock || productInCart}
             className={`w-full py-3 text-xs tracking-widest uppercase font-light border transition duration-300 ${
               isOutOfStock
                 ? "bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed"
-                : product.sizes?.length > 0 && !selectedSize
+                : productInCart
+                ? "bg-green-600 text-white border-green-600 cursor-not-allowed"
+                : (product.sizes?.length > 0 && !selectedSize) || 
+                  (product.colors?.length > 0 && !selectedColor)
                 ? "bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600"
                 : "bg-black text-white border-black hover:bg-gray-800"
             }`}
           >
             {isOutOfStock
               ? "Out of Stock"
-              : product.sizes?.length > 0 && !selectedSize
-              ? "Add to Cat"
+              : productInCart
+              ? "✓ Added to Cart"
+              : (product.sizes?.length > 0 && !selectedSize) || 
+                (product.colors?.length > 0 && !selectedColor)
+              ? "Select Options"
               : "Add to Cart"}
           </button>
         </div>
@@ -300,12 +378,86 @@ const ProductCard = ({ product }) => {
         </div>
       )}
 
+      {/* Color Selection Modal */}
+      {showColorModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+          onClick={() => setShowColorModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-sm w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-light">Select Color</h3>
+              <button
+                onClick={() => setShowColorModal(false)}
+                className="text-gray-500 hover:text-black"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {product.colors?.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => handleColorSelect(color)}
+                  className={`flex flex-col items-center gap-2 p-3 border rounded-lg transition duration-300 ${
+                    selectedColor === color
+                      ? "border-black bg-gray-50"
+                      : "border-gray-300 hover:border-black"
+                  }`}
+                >
+                  <div 
+                    className="w-8 h-8 rounded-full border border-gray-300"
+                    style={{ 
+                      backgroundColor: color.toLowerCase() === 'white' ? '#ffffff' : 
+                                     color.toLowerCase() === 'black' ? '#000000' :
+                                     color.toLowerCase() === 'red' ? '#ef4444' :
+                                     color.toLowerCase() === 'blue' ? '#3b82f6' :
+                                     color.toLowerCase() === 'green' ? '#10b981' :
+                                     color.toLowerCase() === 'yellow' ? '#f59e0b' :
+                                     color.toLowerCase() === 'pink' ? '#ec4899' :
+                                     color.toLowerCase() === 'purple' ? '#8b5cf6' :
+                                     '#6b7280' // default gray
+                    }}
+                  />
+                  <span className="text-xs font-light">{color}</span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowColorModal(false)}
+              className="w-full py-3 bg-black text-white text-sm font-light hover:bg-gray-800 transition duration-300"
+            >
+              Confirm Color
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Quick View Modal */}
-      <QuickViewModal
-        product={product}
-        isOpen={showQuickView}
-        onClose={() => setShowQuickView(false)}
-      />
+      {showQuickView && (
+        <QuickViewModal
+          product={product}
+          isOpen={showQuickView}
+          onClose={() => setShowQuickView(false)}
+        />
+      )}
     </>
   );
 };
